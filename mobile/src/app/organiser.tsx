@@ -15,6 +15,7 @@ export default function OrganiserScreen() {
     request,
     serviceEnabled,
     setServiceEnabled,
+    volunteerAvailable,
   } = useAssistance();
 
   const isWaiting = request?.status === 'waiting';
@@ -81,9 +82,13 @@ export default function OrganiserScreen() {
 
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>—</Text>
-            <Text style={styles.summaryLabel}>Volunteers on duty</Text>
-            <Text style={styles.summaryNote}>Not connected yet</Text>
+            <Text style={styles.metricValue}>
+              {volunteerAvailable ? '1' : '0'}
+            </Text>
+            <Text style={styles.metricLabel}>Volunteers on duty</Text>
+            <Text style={styles.summaryNote}>
+              {volunteerAvailable ? 'Demo Volunteer is available' : 'No volunteers available'}
+            </Text>
           </View>
 
           <View style={styles.summaryCard}>

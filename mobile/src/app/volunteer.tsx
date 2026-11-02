@@ -11,13 +11,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAssistance } from '@/contexts/assistance-context';
 
-
   export default function VolunteerScreen() {
-  const [isAvailable, setIsAvailable] = useState(false);
 
   const {
     request,
     serviceEnabled,
+    volunteerAvailable,
+    setVolunteerAvailable,
     acceptRequest,
     markContactMade,
     completeRequest,
@@ -28,7 +28,7 @@ import { useAssistance } from '@/contexts/assistance-context';
     request?.assignedVolunteerName === 'Demo Volunteer';
 
   function handleAvailability() {
-    if (!isAvailable && !serviceEnabled) {
+    if (!volunteerAvailable && !serviceEnabled) {
       Alert.alert(
         'Service unavailable',
         'The Safe Steps service is currently switched off by the organiser. You cannot start a shift right now.'
@@ -36,7 +36,7 @@ import { useAssistance } from '@/contexts/assistance-context';
       return;
     }
     if (
-      isAvailable &&
+      volunteerAvailable &&
       isMyRequest &&
       (request?.status === 'accepted' ||
         request?.status === 'contacted')
@@ -48,7 +48,7 @@ import { useAssistance } from '@/contexts/assistance-context';
       return;
     }
 
-    setIsAvailable(!isAvailable);
+    setVolunteerAvailable(!volunteerAvailable);
   }
 
   function handleContactMade() {
@@ -100,11 +100,11 @@ import { useAssistance } from '@/contexts/assistance-context';
           <Text style={styles.sectionLabel}>YOUR AVAILABILITY</Text>
 
           <Text style={styles.availabilityTitle}>
-            {isAvailable ? 'YOU ARE ON DUTY' : 'YOU ARE NOT ON DUTY'}
+            {volunteerAvailable ? 'YOU ARE ON DUTY' : 'YOU ARE NOT ON DUTY'}
           </Text>
 
           <Text style={styles.availabilityDescription}>
-            {isAvailable
+            {volunteerAvailable
               ? 'You are opted in to receive assistance requests.'
               : 'You will not receive assistance requests until you opt in.'}
           </Text>
@@ -112,12 +112,12 @@ import { useAssistance } from '@/contexts/assistance-context';
           <Pressable
             style={[
               styles.availabilityButton,
-              isAvailable && styles.unavailableButton,
+              volunteerAvailable && styles.unavailableButton,
             ]}
             onPress={handleAvailability}
           >
             <Text style={styles.availabilityButtonText}>
-              {isAvailable ? 'END MY SHIFT' : "YES, I'M AVAILABLE"}
+              {volunteerAvailable ? 'END MY SHIFT' : "YES, I'M AVAILABLE"}
             </Text>
           </Pressable>
         </View>
@@ -125,7 +125,7 @@ import { useAssistance } from '@/contexts/assistance-context';
         <View style={styles.requestsSection}>
   <Text style={styles.sectionHeading}>INCOMING REQUESTS</Text>
 
-  {!isAvailable && (
+  {!volunteerAvailable && (
     <View style={styles.emptyCard}>
       <Text style={styles.emptyText}>
         Opt in to your volunteer shift to receive requests.
@@ -133,7 +133,7 @@ import { useAssistance } from '@/contexts/assistance-context';
     </View>
   )}
 
-  {isAvailable && !request && (
+  {volunteerAvailable && !request && (
     <View style={styles.emptyCard}>
       <Text style={styles.emptyText}>
         No active requests at the moment. Requests submitted from the Public
@@ -142,7 +142,7 @@ import { useAssistance } from '@/contexts/assistance-context';
     </View>
   )}
 
-  {isAvailable && request?.status === 'waiting' && (
+  {volunteerAvailable && request?.status === 'waiting' && (
     <View style={styles.requestCard}>
       <Text style={styles.requestLabel}>
         NEW ASSISTANCE REQUEST
@@ -298,7 +298,7 @@ import { useAssistance } from '@/contexts/assistance-context';
     </View>
   )}
 
-  {isAvailable &&
+  {volunteerAvailable &&
     request &&
     request.status !== 'waiting' &&
     !isMyRequest && (

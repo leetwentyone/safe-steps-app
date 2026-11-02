@@ -22,6 +22,8 @@ export type AssistanceRequest = {
 type AssistanceContextType = {
   serviceEnabled: boolean;
   setServiceEnabled: (enabled: boolean) => void;
+  volunteerAvailable: boolean;
+  setVolunteerAvailable: (available: boolean) => void;
   request: AssistanceRequest | null;
   createDemoRequest: () => void;
   acceptRequest: (volunteerName: string) => void;
@@ -40,6 +42,7 @@ export function AssistanceProvider({
   const [request, setRequest] =
     useState<AssistanceRequest | null>(null);
     const [serviceEnabled, setServiceEnabled] = useState(false);
+    const [volunteerAvailable, setVolunteerAvailable] = useState(false);
 
   function createDemoRequest() {
     setRequest({
@@ -112,6 +115,8 @@ export function AssistanceProvider({
       value={{
         serviceEnabled,
         setServiceEnabled,
+        volunteerAvailable,
+        setVolunteerAvailable,
         request,
         createDemoRequest,
         acceptRequest,
