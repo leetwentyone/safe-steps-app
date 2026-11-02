@@ -121,6 +121,46 @@ export default function OrganiserScreen() {
           </View>
         </View>
 
+                <Text style={styles.sectionHeading}>VOLUNTEER MANAGEMENT</Text>
+
+        <View style={styles.volunteerManagementCard}>
+          {volunteers.map((volunteer) => (
+            <View
+              key={volunteer.id}
+              style={styles.volunteerManagementRow}
+            >
+              <View style={styles.volunteerManagementInfo}>
+                <Text style={styles.volunteerManagementName}>
+                  {volunteer.name}
+                </Text>
+                <Text style={styles.volunteerManagementId}>
+                  {volunteer.id}
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.volunteerStatusBadge,
+                  volunteer.isAvailable
+                    ? styles.volunteerOnDuty
+                    : styles.volunteerOffDuty,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.volunteerStatusText,
+                    volunteer.isAvailable
+                      ? styles.volunteerOnDutyText
+                      : styles.volunteerOffDutyText,
+                  ]}
+                >
+                  {volunteer.isAvailable ? 'ON DUTY' : 'OFF DUTY'}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
         <Text style={styles.sectionHeading}>REQUEST MONITORING</Text>
 
         {!request && (
@@ -441,6 +481,54 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     color: '#526575',
+  },
+    volunteerManagementCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  volunteerManagementRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8EDF1',
+  },
+  volunteerManagementInfo: {
+    flex: 1,
+  },
+  volunteerManagementName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#173B57',
+  },
+  volunteerManagementId: {
+    fontSize: 12,
+    color: '#8795A1',
+    marginTop: 4,
+  },
+  volunteerStatusBadge: {
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  volunteerOnDuty: {
+    backgroundColor: '#E5F5EC',
+  },
+  volunteerOffDuty: {
+    backgroundColor: '#F1F3F5',
+  },
+  volunteerStatusText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  volunteerOnDutyText: {
+    color: '#176B40',
+  },
+  volunteerOffDutyText: {
+    color: '#71808D',
   },
   footer: {
     textAlign: 'center',
