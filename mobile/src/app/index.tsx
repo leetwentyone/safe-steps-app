@@ -1,6 +1,4 @@
 
-
-import { useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -11,15 +9,20 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-type RequestStatus = 'idle' | 'waiting' | 'accepted';
+import { useAssistance } from '@/contexts/assistance-context';
 
 export default function HomeScreen() {
-  const [requestStatus, setRequestStatus] =
-    useState<RequestStatus>('idle');
+  const {
+    request,
+    createDemoRequest,
+    cancelRequest,
+    resetDemo,
+  } = useAssistance();
+
+  const requestStatus = request?.status ?? 'idle';
 
   function handleHelpPress() {
-    setRequestStatus('waiting');
+    createDemoRequest();
 
     Alert.alert(
       'Demo request submitted',
@@ -27,12 +30,12 @@ export default function HomeScreen() {
     );
   }
 
-  function handleVolunteerAccept() {
-    setRequestStatus('accepted');
-  }
-
   function handleCancelPress() {
-    setRequestStatus('idle');
+    if (requestStatus === 'waiting') {
+      cancelRequest();
+    } else {
+      resetDemo();
+    }
   }
 
   return (
@@ -57,7 +60,9 @@ export default function HomeScreen() {
             style={[
               styles.helpButton,
               requestStatus === 'waiting' && styles.helpButtonWaiting,
-              requestStatus === 'accepted' && styles.helpButtonAccepted,
+              requestStatus !== 'idle' &&
+                requestStatus !== 'waiting' &&
+                styles.helpButtonAccepted,
             ]}
             onPress={
               requestStatus === 'idle' ? handleHelpPress : undefined
@@ -83,48 +88,56 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {requestStatus !== 'idle' && (
+        {request && (
           <View
             style={[
               styles.statusCard,
-              requestStatus === 'accepted' && styles.acceptedStatusCard,
+              requestStatus !== 'waiting' && styles.acceptedStatusCard,
             ]}
           >
             <Text
               style={[
                 styles.statusTitle,
-                requestStatus === 'accepted' && styles.acceptedStatusText,
+                requestStatus !== 'waiting' && styles.acceptedStatusText,
               ]}
             >
               {requestStatus === 'waiting'
                 ? 'Your request has been submitted'
-                : 'A volunteer has accepted your request'}
+                : requestStatus === 'accepted'
+                  ? 'A volunteer has accepted your request'
+                  : requestStatus === 'contacted'
+                    ? 'The volunteer has made contact'
+                    : 'Assistance has been completed'}
             </Text>
 
             <Text
               style={[
                 styles.statusDescription,
-                requestStatus === 'accepted' && styles.acceptedStatusText,
+                requestStatus !== 'waiting' && styles.acceptedStatusText,
               ]}
             >
               {requestStatus === 'waiting'
                 ? "We're waiting for a volunteer to accept your request."
-                : 'A Safe Steps volunteer has accepted your request. They will contact you shortly.'}
+                : requestStatus === 'accepted'
+                  ? `${request.assignedVolunteerName} has accepted your request. They will contact you shortly.`
+                  : requestStatus === 'contacted'
+                    ? 'The volunteer has marked that they have made contact with you.'
+                    : 'The volunteer has marked this assistance request as completed.'}
             </Text>
 
             {requestStatus === 'waiting' && (
               <Pressable
-                onPress={handleVolunteerAccept}
-                style={styles.acceptButton}
+                onPress={handleCancelPress}
+                style={styles.cancelButton}
               >
-                <Text style={styles.acceptButtonText}>
-                  Simulate volunteer accepting
+                <Text style={styles.cancelButtonText}>
+                  Cancel request
                 </Text>
               </Pressable>
             )}
 
             <Pressable
-              onPress={handleCancelPress}
+              onPress={resetDemo}
               style={styles.cancelButton}
             >
               <Text style={styles.cancelButtonText}>Reset demo</Text>
@@ -249,19 +262,6 @@ const styles = StyleSheet.create({
     color: '#80530C',
     textAlign: 'center',
     marginTop: 8,
-  },
-  acceptButton: {
-    marginTop: 16,
-    backgroundColor: '#238B57',
-    paddingVertical: 13,
-    paddingHorizontal: 18,
-    borderRadius: 10,
-  },
-  acceptButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-    textAlign: 'center',
   },
   cancelButton: {
     marginTop: 14,
