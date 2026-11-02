@@ -9,23 +9,29 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAssistance } from '@/contexts/assistance-context';
 
-type RequestStatus =
-  | 'none'
-  | 'incoming'
-  | 'accepted'
-  | 'contacted'
-  | 'completed';
 
-export default function VolunteerScreen() {
+  export default function VolunteerScreen() {
   const [isAvailable, setIsAvailable] = useState(false);
-  const [requestStatus, setRequestStatus] =
-    useState<RequestStatus>('none');
+
+  const {
+    request,
+    acceptRequest,
+    markContactMade,
+    completeRequest,
+    resetDemo,
+  } = useAssistance();
+
+  const isMyRequest =
+    request?.assignedVolunteerName === 'Demo Volunteer';
 
   function handleAvailability() {
     if (
       isAvailable &&
-      (requestStatus === 'accepted' || requestStatus === 'contacted')
+      isMyRequest &&
+      (request?.status === 'accepted' ||
+        request?.status === 'contacted')
     ) {
       Alert.alert(
         'Active assistance',
@@ -35,36 +41,23 @@ export default function VolunteerScreen() {
     }
 
     setIsAvailable(!isAvailable);
-    setRequestStatus('none');
-  }
-
-  function simulateRequest() {
-    setRequestStatus('incoming');
-  }
-
-  function acceptRequest() {
-    setRequestStatus('accepted');
   }
 
   function handleContactMade() {
-    setRequestStatus('contacted');
+    markContactMade();
   }
 
-  function completeRequest() {
+  function completeAssistance() {
     Alert.alert(
       'Assistance completed',
       'This demonstration request has been marked as completed.',
       [
         {
           text: 'OK',
-          onPress: () => setRequestStatus('completed'),
+          onPress: completeRequest,
         },
       ],
     );
-  }
-
-  function resetRequest() {
-    setRequestStatus('none');
   }
 
   function handleContactPress() {
@@ -122,191 +115,192 @@ export default function VolunteerScreen() {
         </View>
 
         <View style={styles.requestsSection}>
-          <Text style={styles.sectionHeading}>INCOMING REQUESTS</Text>
+  <Text style={styles.sectionHeading}>INCOMING REQUESTS</Text>
 
-          {!isAvailable && (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>
-                Opt in to your volunteer shift to receive requests.
-              </Text>
-            </View>
-          )}
+  {!isAvailable && (
+    <View style={styles.emptyCard}>
+      <Text style={styles.emptyText}>
+        Opt in to your volunteer shift to receive requests.
+      </Text>
+    </View>
+  )}
 
-          {isAvailable && requestStatus === 'none' && (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>
-                No active requests at the moment.
-              </Text>
+  {isAvailable && !request && (
+    <View style={styles.emptyCard}>
+      <Text style={styles.emptyText}>
+        No active requests at the moment. Requests submitted from the Public
+        tab will appear here.
+      </Text>
+    </View>
+  )}
 
-              <Pressable
-                style={styles.demoButton}
-                onPress={simulateRequest}
-              >
-                <Text style={styles.demoButtonText}>
-                  Simulate incoming request
-                </Text>
-              </Pressable>
-            </View>
-          )}
+  {isAvailable && request?.status === 'waiting' && (
+    <View style={styles.requestCard}>
+      <Text style={styles.requestLabel}>
+        NEW ASSISTANCE REQUEST
+      </Text>
 
-          {requestStatus === 'incoming' && (
-            <View style={styles.requestCard}>
-              <Text style={styles.requestLabel}>
-                NEW ASSISTANCE REQUEST
-              </Text>
+      <Text style={styles.requestTitle}>
+        Someone needs assistance
+      </Text>
 
-              <Text style={styles.requestTitle}>
-                Someone needs assistance
-              </Text>
+      <Text style={styles.requestDescription}>
+        A member of the public has requested help nearby.
+      </Text>
 
-              <Text style={styles.requestDescription}>
-                A member of the public has requested help nearby.
-              </Text>
+      <Pressable
+        style={styles.acceptButton}
+        onPress={() => acceptRequest('Demo Volunteer')}
+      >
+        <Text style={styles.acceptButtonText}>
+          ACCEPT REQUEST
+        </Text>
+      </Pressable>
+    </View>
+  )}
 
-              <Pressable
-                style={styles.acceptButton}
-                onPress={acceptRequest}
-              >
-                <Text style={styles.acceptButtonText}>
-                  ACCEPT REQUEST
-                </Text>
-              </Pressable>
-            </View>
-          )}
+  {request && isMyRequest && (
+    <View style={styles.activeCard}>
+      <View style={styles.activeHeader}>
+        <Text style={styles.activeHeading}>
+          ACTIVE ASSISTANCE
+        </Text>
 
-          {(requestStatus === 'accepted' ||
-            requestStatus === 'contacted' ||
-            requestStatus === 'completed') && (
-            <View style={styles.activeCard}>
-              <View style={styles.activeHeader}>
-                <Text style={styles.activeHeading}>
-                  ACTIVE ASSISTANCE
-                </Text>
-
-                <View style={styles.activeBadge}>
-                  <Text style={styles.activeBadgeText}>
-                    {requestStatus === 'accepted'
-                      ? 'ACCEPTED'
-                      : requestStatus === 'contacted'
-                        ? 'CONTACT MADE'
-                        : 'COMPLETED'}
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={styles.requesterName}>
-                Alex Morgan
-              </Text>
-
-              <Text style={styles.requestDescription}>
-                Demo requester · Fictional information
-              </Text>
-
-              <View style={styles.detailDivider} />
-
-              <Text style={styles.detailLabel}>REQUEST LOCATION</Text>
-              <Text style={styles.detailValue}>
-                Town Centre, Demo Location
-              </Text>
-
-              <Text style={styles.detailLabel}>REQUEST REFERENCE</Text>
-              <Text style={styles.detailValue}>
-                SS-DEMO-001
-              </Text>
-
-              <View style={styles.detailDivider} />
-
-              <Text style={styles.progressHeading}>
-                ASSISTANCE PROGRESS
-              </Text>
-
-              <View style={styles.progressRow}>
-                <View style={styles.progressDot} />
-                <Text style={styles.progressText}>
-                  Request accepted
-                </Text>
-              </View>
-
-              <View style={styles.progressRow}>
-                <View
-                  style={[
-                    styles.progressDot,
-                    requestStatus !== 'accepted' &&
-                      styles.progressDotComplete,
-                  ]}
-                />
-                <Text style={styles.progressText}>
-                  Contact made
-                </Text>
-              </View>
-
-              <View style={styles.progressRow}>
-                <View
-                  style={[
-                    styles.progressDot,
-                    requestStatus === 'completed' &&
-                      styles.progressDotComplete,
-                  ]}
-                />
-                <Text style={styles.progressText}>
-                  Assistance completed
-                </Text>
-              </View>
-
-              {requestStatus !== 'completed' && (
-                <>
-                  <Pressable
-                    style={styles.contactButton}
-                    onPress={handleContactPress}
-                  >
-                    <Text style={styles.actionButtonText}>
-                      CONTACT REQUESTER
-                    </Text>
-                  </Pressable>
-
-                  {requestStatus === 'accepted' && (
-                    <Pressable
-                      style={styles.contactMadeButton}
-                      onPress={handleContactMade}
-                    >
-                      <Text style={styles.actionButtonText}>
-                        MARK CONTACT MADE
-                      </Text>
-                    </Pressable>
-                  )}
-
-                  {requestStatus === 'contacted' && (
-                    <Pressable
-                      style={styles.completeButton}
-                      onPress={completeRequest}
-                    >
-                      <Text style={styles.actionButtonText}>
-                        MARK ASSISTANCE COMPLETED
-                      </Text>
-                    </Pressable>
-                  )}
-                </>
-              )}
-
-              {requestStatus === 'completed' && (
-                <View style={styles.completedMessage}>
-                  <Text style={styles.completedMessageText}>
-                    This assistance request has been completed.
-                  </Text>
-                </View>
-              )}
-
-              <Pressable
-                style={styles.resetButton}
-                onPress={resetRequest}
-              >
-                <Text style={styles.resetButtonText}>
-                  Reset demonstration
-                </Text>
-              </Pressable>
-            </View>
-          )}
+        <View style={styles.activeBadge}>
+          <Text style={styles.activeBadgeText}>
+            {request.status === 'accepted'
+              ? 'ACCEPTED'
+              : request.status === 'contacted'
+                ? 'CONTACT MADE'
+                : 'COMPLETED'}
+          </Text>
         </View>
+      </View>
+
+      <Text style={styles.requesterName}>
+        {request.requesterName}
+      </Text>
+
+      <Text style={styles.requestDescription}>
+        Demo requester · Fictional information
+      </Text>
+
+      <View style={styles.detailDivider} />
+
+      <Text style={styles.detailLabel}>REQUEST LOCATION</Text>
+      <Text style={styles.detailValue}>
+        {request.locationLabel}
+      </Text>
+
+      <Text style={styles.detailLabel}>REQUEST REFERENCE</Text>
+      <Text style={styles.detailValue}>
+        {request.id}
+      </Text>
+
+      <View style={styles.detailDivider} />
+
+      <Text style={styles.progressHeading}>
+        ASSISTANCE PROGRESS
+      </Text>
+
+      <View style={styles.progressRow}>
+        <View style={styles.progressDot} />
+        <Text style={styles.progressText}>
+          Request accepted
+        </Text>
+      </View>
+
+      <View style={styles.progressRow}>
+        <View
+          style={[
+            styles.progressDot,
+            request.status !== 'accepted' &&
+              styles.progressDotComplete,
+          ]}
+        />
+        <Text style={styles.progressText}>
+          Contact made
+        </Text>
+      </View>
+
+      <View style={styles.progressRow}>
+        <View
+          style={[
+            styles.progressDot,
+            request.status === 'completed' &&
+              styles.progressDotComplete,
+          ]}
+        />
+        <Text style={styles.progressText}>
+          Assistance completed
+        </Text>
+      </View>
+
+      {request.status !== 'completed' && (
+        <>
+          <Pressable
+            style={styles.contactButton}
+            onPress={handleContactPress}
+          >
+            <Text style={styles.actionButtonText}>
+              CONTACT REQUESTER
+            </Text>
+          </Pressable>
+
+          {request.status === 'accepted' && (
+            <Pressable
+              style={styles.contactMadeButton}
+              onPress={handleContactMade}
+            >
+              <Text style={styles.actionButtonText}>
+                MARK CONTACT MADE
+              </Text>
+            </Pressable>
+          )}
+
+          {request.status === 'contacted' && (
+            <Pressable
+              style={styles.completeButton}
+              onPress={completeAssistance}
+            >
+              <Text style={styles.actionButtonText}>
+                MARK ASSISTANCE COMPLETED
+              </Text>
+            </Pressable>
+          )}
+        </>
+      )}
+
+      {request.status === 'completed' && (
+        <View style={styles.completedMessage}>
+          <Text style={styles.completedMessageText}>
+            This assistance request has been completed.
+          </Text>
+        </View>
+      )}
+
+      <Pressable
+        style={styles.resetButton}
+        onPress={resetDemo}
+      >
+        <Text style={styles.resetButtonText}>
+          Reset demonstration
+        </Text>
+      </Pressable>
+    </View>
+  )}
+
+  {isAvailable &&
+    request &&
+    request.status !== 'waiting' &&
+    !isMyRequest && (
+      <View style={styles.emptyCard}>
+        <Text style={styles.emptyText}>
+          This request has already been accepted by another volunteer.
+        </Text>
+      </View>
+    )}
+</View>
 
         <View style={styles.emergencyNote}>
           <Text style={styles.emergencyText}>
