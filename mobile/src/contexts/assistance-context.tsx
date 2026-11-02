@@ -51,6 +51,9 @@ export function AssistanceProvider({
   }
 
   function acceptRequest(volunteerName: string) {
+    if (!serviceEnabled) {
+      return;
+    }
     setRequest((currentRequest) => {
       if (!currentRequest || currentRequest.status !== 'waiting') {
         return currentRequest;

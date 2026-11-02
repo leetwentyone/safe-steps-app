@@ -17,6 +17,7 @@ import { useAssistance } from '@/contexts/assistance-context';
 
   const {
     request,
+    serviceEnabled,
     acceptRequest,
     markContactMade,
     completeRequest,
@@ -27,6 +28,13 @@ import { useAssistance } from '@/contexts/assistance-context';
     request?.assignedVolunteerName === 'Demo Volunteer';
 
   function handleAvailability() {
+    if (!isAvailable && !serviceEnabled) {
+      Alert.alert(
+        'Service unavailable',
+        'The Safe Steps service is currently switched off by the organiser. You cannot start a shift right now.'
+      );
+      return;
+    }
     if (
       isAvailable &&
       isMyRequest &&
