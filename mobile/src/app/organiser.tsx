@@ -208,6 +208,14 @@ export default function OrganiserScreen() {
             <Text style={styles.detailValue}>
               {request.assignedVolunteerName ?? 'Not yet assigned'}
             </Text>
+            {request.assignedVolunteerId && (
+              <>
+                <Text style={styles.detailLabel}>VOLUNTEER ID</Text>
+                <Text style={styles.detailValue}>
+                  {request.assignedVolunteerId}
+                </Text>
+              </>
+            )}
           </View>
         )}
 
