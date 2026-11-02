@@ -22,6 +22,7 @@ export type AssistanceRequest = {
   requesterName: string;
   locationLabel: string;
   status: AssistanceStatus;
+  assignedVolunteerId?: string;
   assignedVolunteerName?: string;
 };
 
@@ -38,7 +39,7 @@ type AssistanceContextType = {
   setVolunteerAvailable: (available: boolean) => void;
   request: AssistanceRequest | null;
   createDemoRequest: () => void;
-  acceptRequest: (volunteerName: string) => void;
+  acceptRequest: (volunteerId: string) => void;
   markContactMade: () => void;
   completeRequest: () => void;
   cancelRequest: () => void;
@@ -95,10 +96,19 @@ const AssistanceContext =
     });
   }
 
-  function acceptRequest(volunteerName: string) {
+  function acceptRequest(volunteerId: string) {
     if (!serviceEnabled) {
       return;
     }
+
+    const volunteer = volunteers.find(
+      (item) => item.id === volunteerId,
+    );
+
+    if (!volunteer || !volunteer.isAvailable) {
+      return;
+    }
+
     setRequest((currentRequest) => {
       if (!currentRequest || currentRequest.status !== 'waiting') {
         return currentRequest;
@@ -107,7 +117,8 @@ const AssistanceContext =
       return {
         ...currentRequest,
         status: 'accepted',
-        assignedVolunteerName: volunteerName,
+        assignedVolunteerId: volunteer.id,
+        assignedVolunteerName: volunteer.name,
       };
     });
   }
