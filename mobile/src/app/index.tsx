@@ -14,6 +14,7 @@ import { useAssistance } from '@/contexts/assistance-context';
 export default function HomeScreen() {
   const {
     request,
+    serviceEnabled,
     createDemoRequest,
     cancelRequest,
     resetDemo,
@@ -22,6 +23,14 @@ export default function HomeScreen() {
   const requestStatus = request?.status ?? 'idle';
 
   function handleHelpPress() {
+    if (!serviceEnabled) {
+      Alert.alert(
+        'Service unavailable',
+        'Safe Steps is currently switched off. Please try again later. If someone is in immediate danger, call 999.',
+      );
+      return;
+    }
+
     createDemoRequest();
 
     Alert.alert(
@@ -52,6 +61,30 @@ export default function HomeScreen() {
           <Text style={styles.heading}>Need a little help?</Text>
           <Text style={styles.description}>
             Request assistance from an available Safe Steps volunteer nearby.
+          </Text>
+        </View>
+
+        <View style={styles.serviceStatusCard}>
+          <View
+            style={[
+              styles.serviceStatusDot,
+              {
+                backgroundColor: serviceEnabled ? '#238B57' : '#D93636',
+              },
+            ]}
+          />
+
+          <Text
+            style={[
+              styles.serviceStatusText,
+              {
+                color: serviceEnabled ? '#238B57' : '#D93636',
+              },
+            ]}
+          >
+            {serviceEnabled
+              ? 'Safe Steps is available'
+              : 'Safe Steps is currently unavailable'}
           </Text>
         </View>
 
@@ -203,6 +236,26 @@ const styles = StyleSheet.create({
     color: '#526575',
     textAlign: 'center',
     marginTop: 12,
+  },
+  serviceStatusCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  serviceStatusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  serviceStatusText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   helpSection: {
     width: '100%',

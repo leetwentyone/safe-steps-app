@@ -20,6 +20,8 @@ export type AssistanceRequest = {
 };
 
 type AssistanceContextType = {
+  serviceEnabled: boolean;
+  setServiceEnabled: (enabled: boolean) => void;
   request: AssistanceRequest | null;
   createDemoRequest: () => void;
   acceptRequest: (volunteerName: string) => void;
@@ -37,6 +39,7 @@ export function AssistanceProvider({
 }: PropsWithChildren) {
   const [request, setRequest] =
     useState<AssistanceRequest | null>(null);
+    const [serviceEnabled, setServiceEnabled] = useState(false);
 
   function createDemoRequest() {
     setRequest({
@@ -104,6 +107,8 @@ export function AssistanceProvider({
   return (
     <AssistanceContext.Provider
       value={{
+        serviceEnabled,
+        setServiceEnabled,
         request,
         createDemoRequest,
         acceptRequest,
