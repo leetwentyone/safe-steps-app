@@ -28,7 +28,7 @@ import { useAssistance } from '@/contexts/assistance-context';
   } = useAssistance();
 
   const isMyRequest =
-    request?.assignedVolunteerName === 'Demo Volunteer';
+    request?.assignedVolunteerId === selectedVolunteerId;
 
     const currentVolunteer = volunteers.find(
      (volunteer) => volunteer.id === selectedVolunteerId,
@@ -194,7 +194,7 @@ import { useAssistance } from '@/contexts/assistance-context';
 
       <Pressable
         style={styles.acceptButton}
-        onPress={() => acceptRequest('Demo Volunteer')}
+        onPress={() => acceptRequest(selectedVolunteerId)}
       >
         <Text style={styles.acceptButtonText}>
           ACCEPT REQUEST
