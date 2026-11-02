@@ -13,11 +13,14 @@ import { useAssistance } from '@/contexts/assistance-context';
 
   export default function VolunteerScreen() {
 
+    const [selectedVolunteerId, setSelectedVolunteerId] =
+      useState('vol-001');
+
   const {
     request,
     serviceEnabled,
-    volunteerAvailable,
-    setVolunteerAvailable,
+    volunteers,
+    updateVolunteerAvailability,
     acceptRequest,
     markContactMade,
     completeRequest,
@@ -26,6 +29,12 @@ import { useAssistance } from '@/contexts/assistance-context';
 
   const isMyRequest =
     request?.assignedVolunteerName === 'Demo Volunteer';
+
+    const currentVolunteer = volunteers.find(
+     (volunteer) => volunteer.id === selectedVolunteerId,
+    );
+
+    const volunteerAvailable = currentVolunteer?.isAvailable ?? false;
 
   function handleAvailability() {
     if (!volunteerAvailable && !serviceEnabled) {
@@ -48,7 +57,10 @@ import { useAssistance } from '@/contexts/assistance-context';
       return;
     }
 
-    setVolunteerAvailable(!volunteerAvailable);
+    updateVolunteerAvailability(
+      selectedVolunteerId,
+      !volunteerAvailable,
+    );
   }
 
   function handleContactMade() {
@@ -94,6 +106,30 @@ import { useAssistance } from '@/contexts/assistance-context';
           <Text style={styles.smallText}>
             The organiser controls the actual service availability.
           </Text>
+        </View>
+
+                <View style={styles.availabilityCard}>
+          <Text style={styles.sectionLabel}>SELECT VOLUNTEER</Text>
+
+          {volunteers.map((volunteer) => (
+            <Pressable
+              key={volunteer.id}
+              style={[
+                styles.volunteerOption,
+                selectedVolunteerId === volunteer.id &&
+                  styles.selectedVolunteerOption,
+              ]}
+              onPress={() => setSelectedVolunteerId(volunteer.id)}
+            >
+              <Text style={styles.volunteerOptionText}>
+                {volunteer.name}
+              </Text>
+
+              <Text style={styles.smallText}>
+                {volunteer.isAvailable ? 'ON DUTY' : 'OFF DUTY'}
+              </Text>
+            </Pressable>
+          ))}
         </View>
 
         <View style={styles.availabilityCard}>
@@ -630,6 +666,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     color: '#526575',
+  },
+    volunteerOption: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#DCE3E8',
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 8,
+  },
+  selectedVolunteerOption: {
+    borderColor: '#176B40',
+    borderWidth: 2,
+    backgroundColor: '#E5F5EC',
+  },
+  volunteerOptionText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#263746',
+    marginBottom: 5,
   },
   footer: {
     textAlign: 'center',

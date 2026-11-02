@@ -11,6 +11,12 @@ export type AssistanceStatus =
   | 'contacted'
   | 'completed';
 
+export type DemoVolunteer = {
+  id: string;
+  name: string;
+  isAvailable: boolean;
+};
+
 export type AssistanceRequest = {
   id: string;
   requesterName: string;
@@ -20,6 +26,12 @@ export type AssistanceRequest = {
 };
 
 type AssistanceContextType = {
+  volunteers: DemoVolunteer[];
+  setVolunteers: (volunteers: DemoVolunteer[]) => void;
+  updateVolunteerAvailability: (
+    volunteerId: string,
+    isAvailable: boolean,
+  ) => void;
   serviceEnabled: boolean;
   setServiceEnabled: (enabled: boolean) => void;
   volunteerAvailable: boolean;
@@ -36,13 +48,43 @@ type AssistanceContextType = {
 const AssistanceContext =
   createContext<AssistanceContextType | undefined>(undefined);
 
-export function AssistanceProvider({
-  children,
-}: PropsWithChildren) {
-  const [request, setRequest] =
-    useState<AssistanceRequest | null>(null);
+    export function AssistanceProvider({
+      children,
+    }: PropsWithChildren) {
+      const [request, setRequest] =
+        useState<AssistanceRequest | null>(null);
+        const [volunteers, setVolunteers] = useState<DemoVolunteer[]>([
+      {
+        id: 'vol-001',
+        name: 'Demo Volunteer',
+        isAvailable: false,
+      },
+      {
+        id: 'vol-002',
+        name: 'Sam Taylor',
+        isAvailable: false,
+      },
+      {
+        id: 'vol-003',
+        name: 'Jordan Lee',
+        isAvailable: false,
+      },
+    ]);
     const [serviceEnabled, setServiceEnabled] = useState(false);
     const [volunteerAvailable, setVolunteerAvailable] = useState(false);
+
+  function updateVolunteerAvailability(
+    volunteerId: string,
+    isAvailable: boolean,
+  ) {
+    setVolunteers((currentVolunteers) =>
+      currentVolunteers.map((volunteer) =>
+        volunteer.id === volunteerId
+          ? { ...volunteer, isAvailable }
+          : volunteer,
+      ),
+    );
+  }
 
   function createDemoRequest() {
     setRequest({
@@ -113,6 +155,9 @@ export function AssistanceProvider({
   return (
     <AssistanceContext.Provider
       value={{
+        volunteers,
+        setVolunteers,
+        updateVolunteerAvailability,
         serviceEnabled,
         setServiceEnabled,
         volunteerAvailable,

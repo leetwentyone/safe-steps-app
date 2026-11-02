@@ -15,8 +15,12 @@ export default function OrganiserScreen() {
     request,
     serviceEnabled,
     setServiceEnabled,
-    volunteerAvailable,
+    volunteers,
   } = useAssistance();
+
+  const volunteersOnDuty = volunteers.filter(
+    (volunteer) => volunteer.isAvailable,
+  ).length;
 
   const isWaiting = request?.status === 'waiting';
 
@@ -83,11 +87,13 @@ export default function OrganiserScreen() {
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
             <Text style={styles.metricValue}>
-              {volunteerAvailable ? '1' : '0'}
+              {volunteersOnDuty}
             </Text>
             <Text style={styles.metricLabel}>Volunteers on duty</Text>
             <Text style={styles.summaryNote}>
-              {volunteerAvailable ? 'Demo Volunteer is available' : 'No volunteers available'}
+              {volunteersOnDuty === 1
+                ? '1 volunteer is available'
+                : `${volunteersOnDuty} volunteers are available`}
             </Text>
           </View>
 
@@ -306,6 +312,18 @@ const styles = StyleSheet.create({
     fontSize: 27,
     fontWeight: '800',
     color: '#173B57',
+  },
+  metricValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#526575',
+    marginTop: 5,
+  },
+  metricLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1fcc70',
+    marginTop: 5,
   },
   summaryLabel: {
     fontSize: 13,
