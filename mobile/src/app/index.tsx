@@ -93,30 +93,39 @@ export default function HomeScreen() {
             style={[
               styles.helpButton,
               requestStatus === 'waiting' && styles.helpButtonWaiting,
-              requestStatus !== 'idle' &&
-                requestStatus !== 'waiting' &&
+              ['accepted', 'contacted', 'completed'].includes(requestStatus) &&
                 styles.helpButtonAccepted,
             ]}
             onPress={
-              requestStatus === 'idle' ? handleHelpPress : undefined
+              requestStatus === 'idle' || requestStatus === 'cancelled'
+                ? handleHelpPress
+                : undefined
             }
             accessibilityRole="button"
             accessibilityLabel="Request help"
           >
             <Text style={styles.helpButtonText}>
-              {requestStatus === 'idle'
+              {requestStatus === 'idle' || requestStatus === 'cancelled'
                 ? 'HELP'
                 : requestStatus === 'waiting'
                   ? 'REQUEST SENT'
-                  : 'ACCEPTED'}
+                  : requestStatus === 'accepted'
+                    ? 'ACCEPTED'
+                    : requestStatus === 'contacted'
+                      ? 'CONTACT MADE'
+                      : 'COMPLETED'}
             </Text>
 
             <Text style={styles.helpButtonSubtext}>
-              {requestStatus === 'idle'
+              {requestStatus === 'idle' || requestStatus === 'cancelled'
                 ? 'Tap here to request help'
                 : requestStatus === 'waiting'
                   ? 'Waiting for a volunteer'
-                  : 'A volunteer has accepted'}
+                  : requestStatus === 'accepted'
+                    ? 'A volunteer has accepted'
+                    : requestStatus === 'contacted'
+                      ? 'A volunteer has contacted you'
+                      : 'Assistance has been completed'}
             </Text>
           </Pressable>
         </View>
@@ -140,7 +149,9 @@ export default function HomeScreen() {
                   ? 'A volunteer has accepted your request'
                   : requestStatus === 'contacted'
                     ? 'The volunteer has made contact'
-                    : 'Assistance has been completed'}
+                    : requestStatus === 'completed'
+                    ? 'Assistance has been completed'
+                    : 'Your request has been cancelled'}
             </Text>
 
             <Text
@@ -155,7 +166,9 @@ export default function HomeScreen() {
                   ? `${request.assignedVolunteerName} has accepted your request. They will contact you shortly.`
                   : requestStatus === 'contacted'
                     ? 'The volunteer has marked that they have made contact with you.'
-                    : 'The volunteer has marked this assistance request as completed.'}
+                    : requestStatus === 'completed'
+                    ? 'The volunteer has marked this assistance request as completed.'
+                    : 'Your assistance request has been cancelled. If you still need help, you can submit a new request when the service is available.'}
             </Text>
 
             {requestStatus === 'waiting' && (

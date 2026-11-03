@@ -30,6 +30,8 @@ export default function OrganiserScreen() {
 
   const isCompleted = request?.status === 'completed';
 
+  const isCancelled = request?.status === 'cancelled';
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -186,6 +188,8 @@ export default function OrganiserScreen() {
                     ? styles.waitingBadge
                     : isCompleted
                       ? styles.completedBadge
+                      : isCancelled
+                      ? styles.cancelledBadge
                       : styles.activeBadge,
                 ]}
               >
@@ -438,6 +442,9 @@ const styles = StyleSheet.create({
   completedBadge: {
     backgroundColor: '#E5F5EC',
   },
+  cancelledBadge: {
+    backgroundColor: '#EEEEEE',
+  },  
   badgeText: {
     fontSize: 10,
     fontWeight: '800',

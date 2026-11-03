@@ -9,7 +9,8 @@ export type AssistanceStatus =
   | 'waiting'
   | 'accepted'
   | 'contacted'
-  | 'completed';
+  | 'completed'
+  | 'cancelled';
 
 export type DemoVolunteer = {
   id: string;
@@ -155,7 +156,10 @@ const AssistanceContext =
         return currentRequest;
       }
 
-      return null;
+      return {
+        ...currentRequest,
+        status: 'cancelled',
+      };
     });
   }
 
