@@ -60,6 +60,8 @@ export default function OrganiserScreen() {
     setServiceEnabled,
     volunteers,
     reassignRequest,
+    requestTimeoutMinutes,
+    setRequestTimeoutMinutes,
   } = useAssistance();
 
   const volunteersOnDuty = volunteers.filter(
@@ -125,6 +127,47 @@ export default function OrganiserScreen() {
           <Text style={styles.demoNote}>
             Demonstration control only. This does not yet affect the Public
             or Volunteer screens.
+          </Text>
+        </View>
+
+        <View style={styles.timeoutCard}>
+          <Text style={styles.sectionLabel}>REQUEST TIMEOUT</Text>
+
+          <Text style={styles.description}>
+            Choose how long a request can wait for a volunteer before
+            the organiser and the user's trusted contacts are notified.
+          </Text>
+
+          <Text style={styles.timeoutValue}>
+            {requestTimeoutMinutes} {requestTimeoutMinutes === 1 ? 'minute' : 'minutes'}
+          </Text>
+
+          <View style={styles.timeoutOptions}>
+            {[1, 2, 3, 4, 5].map((minutes) => (
+              <Pressable
+                key={minutes}
+                style={[
+                  styles.timeoutOption,
+                  requestTimeoutMinutes === minutes &&
+                    styles.selectedTimeoutOption,
+                ]}
+                onPress={() => setRequestTimeoutMinutes(minutes)}
+              >
+                <Text
+                  style={[
+                    styles.timeoutOptionText,
+                    requestTimeoutMinutes === minutes &&
+                      styles.selectedTimeoutOptionText,
+                  ]}
+                >
+                  {minutes}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={styles.demoNote}>
+            Demonstration setting. Notifications are not yet sent.
           </Text>
         </View>
 
@@ -717,5 +760,51 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+    timeoutCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 18,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+
+  timeoutValue: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#222222',
+    marginVertical: 12,
+  },
+
+  timeoutOptions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
+  },
+
+  timeoutOption: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+
+  selectedTimeoutOption: {
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
+  },
+
+  timeoutOptionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+  },
+
+  selectedTimeoutOptionText: {
+    color: '#FFFFFF',
   },
 });

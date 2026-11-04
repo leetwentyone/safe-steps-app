@@ -28,6 +28,8 @@ export type AssistanceRequest = {
 };
 
 type AssistanceContextType = {
+  requestTimeoutMinutes: number;
+  setRequestTimeoutMinutes: (minutes: number) => void;
   volunteers: DemoVolunteer[];
   setVolunteers: (volunteers: DemoVolunteer[]) => void;
   updateVolunteerAvailability: (
@@ -74,6 +76,10 @@ const AssistanceContext =
       },
     ]);
     const [serviceEnabled, setServiceEnabled] = useState(false);
+
+    const [requestTimeoutMinutes, setRequestTimeoutMinutes] =
+      useState(2);
+
     const [volunteerAvailable, setVolunteerAvailable] = useState(false);
 
   function updateVolunteerAvailability(
@@ -200,6 +206,8 @@ const AssistanceContext =
   return (
     <AssistanceContext.Provider
       value={{
+        requestTimeoutMinutes,
+        setRequestTimeoutMinutes,
         volunteers,
         setVolunteers,
         updateVolunteerAvailability,
