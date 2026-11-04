@@ -1,4 +1,5 @@
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -6,16 +7,59 @@ import {
   View,
 } from 'react-native';
 
+import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAssistance } from '@/contexts/assistance-context';
 
 export default function OrganiserScreen() {
+  const [selectedVolunteerId, setSelectedVolunteerId] = useState('');
+
+  function handleReassignPress() {
+    const selectedVolunteer = volunteers.find(
+      (volunteer) => volunteer.id === selectedVolunteerId,
+    );
+
+    if (!selectedVolunteer) {
+      Alert.alert(
+        'Select a volunteer',
+        'Please select an available volunteer first.',
+      );
+      return;
+    }
+
+    if (selectedVolunteer.id === request?.assignedVolunteerId) {
+      Alert.alert(
+        'Already assigned',
+        'This volunteer is already assigned to this request.',
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Confirm reassignment',
+      `Are you sure you want to reassign this request to ${selectedVolunteer.name}?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Reassign',
+          onPress: () => {
+            reassignRequest(selectedVolunteer.id);
+            setSelectedVolunteerId('');
+          },
+        },
+      ],
+    );
+  }
 
   const {
     request,
     serviceEnabled,
     setServiceEnabled,
     volunteers,
+    reassignRequest,
   } = useAssistance();
 
   const volunteersOnDuty = volunteers.filter(
@@ -220,6 +264,70 @@ export default function OrganiserScreen() {
                 </Text>
               </>
             )}
+            {(request.status === 'accepted' ||
+              request.status === 'contacted') && (
+              <View style={styles.reassignmentSection}>
+                <Text style={styles.detailLabel}>
+                  REASSIGN VOLUNTEER
+                </Text>
+
+                <Text style={styles.reassignmentDescription}>
+                  Select another volunteer who is currently on duty.
+                </Text>
+
+                {volunteers.filter(
+                  (volunteer) =>
+                    volunteer.isAvailable &&
+                    volunteer.id !== request.assignedVolunteerId,
+                ).length === 0 ? (
+                  <Text style={styles.reassignmentDescription}>
+                    No other volunteers are currently available.
+                  </Text>
+                ) : (
+                  volunteers
+                    .filter(
+                      (volunteer) =>
+                        volunteer.isAvailable &&
+                        volunteer.id !== request.assignedVolunteerId,
+                    )
+                    .map((volunteer) => (
+                      <Pressable
+                        key={volunteer.id}
+                        style={[
+                          styles.reassignmentVolunteerOption,
+                          selectedVolunteerId === volunteer.id &&
+                            styles.selectedReassignmentVolunteer,
+                        ]}
+                        onPress={() =>
+                          setSelectedVolunteerId(volunteer.id)
+                        }
+                      >
+                        <Text style={styles.reassignmentVolunteerName}>
+                          {volunteer.name}
+                        </Text>
+
+                        <Text style={styles.reassignmentVolunteerStatus}>
+                          ON DUTY
+                        </Text>
+                      </Pressable>
+                    ))
+                )}
+
+                <Pressable
+                  style={[
+                    styles.reassignButton,
+                    !selectedVolunteerId && styles.reassignButtonDisabled,
+                  ]}
+                  disabled={!selectedVolunteerId}
+                  onPress={handleReassignPress}
+                >
+                  <Text style={styles.reassignButtonText}>
+                    REASSIGN VOLUNTEER
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+            
           </View>
         )}
 
@@ -550,5 +658,64 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8795A1',
     marginTop: 25,
+  },
+    reassignmentSection: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+  },
+
+  reassignmentDescription: {
+    fontSize: 13,
+    color: '#666666',
+    marginBottom: 12,
+    lineHeight: 19,
+  },
+
+  reassignmentVolunteerOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#DDDDDD',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+
+  selectedReassignmentVolunteer: {
+    borderColor: '#2563EB',
+    backgroundColor: '#EFF6FF',
+  },
+
+  reassignmentVolunteerName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#222222',
+  },
+
+  reassignmentVolunteerStatus: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#16803C',
+  },
+
+  reassignButton: {
+    backgroundColor: '#2563EB',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+
+  reassignButtonDisabled: {
+    backgroundColor: '#AAAAAA',
+  },
+
+  reassignButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

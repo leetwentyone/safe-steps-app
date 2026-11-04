@@ -41,6 +41,7 @@ type AssistanceContextType = {
   request: AssistanceRequest | null;
   createDemoRequest: () => void;
   acceptRequest: (volunteerId: string) => void;
+  reassignRequest: (volunteerId: string) => void;
   markContactMade: () => void;
   completeRequest: () => void;
   cancelRequest: () => void;
@@ -124,6 +125,35 @@ const AssistanceContext =
     });
   }
 
+  function reassignRequest(volunteerId: string) {
+    if (!serviceEnabled) {
+      return;
+    }
+
+    const volunteer = volunteers.find(
+      (item) => item.id === volunteerId && item.isAvailable,
+    );
+
+    if (!volunteer) {
+      return;
+    }
+
+    setRequest((currentRequest) => {
+      if (
+        !currentRequest ||
+        !['accepted', 'contacted'].includes(currentRequest.status)
+      ) {
+        return currentRequest;
+      }
+
+      return {
+        ...currentRequest,
+        assignedVolunteerId: volunteer.id,
+        assignedVolunteerName: volunteer.name,
+      };
+    });
+  }
+
   function markContactMade() {
     setRequest((currentRequest) => {
       if (!currentRequest || currentRequest.status !== 'accepted') {
@@ -180,6 +210,7 @@ const AssistanceContext =
         request,
         createDemoRequest,
         acceptRequest,
+        reassignRequest,
         markContactMade,
         completeRequest,
         cancelRequest,
