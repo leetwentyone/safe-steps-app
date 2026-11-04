@@ -1,4 +1,3 @@
-
 import {
   Alert,
   Pressable,
@@ -8,6 +7,7 @@ import {
   View,
 } from 'react-native';
 
+import { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAssistance } from '@/contexts/assistance-context';
 
@@ -15,12 +15,37 @@ export default function HomeScreen() {
   const {
     request,
     serviceEnabled,
+    requestTimeoutMinutes,
     createDemoRequest,
     cancelRequest,
     resetDemo,
   } = useAssistance();
 
   const requestStatus = request?.status ?? 'idle';
+
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  
+  useEffect(() => {
+    if (requestStatus !== 'waiting') {
+      setRemainingSeconds(0);
+      return;
+    }
+
+    setRemainingSeconds(requestTimeoutMinutes * 60);
+
+    const interval = setInterval(() => {
+      setRemainingSeconds((previousSeconds) => {
+        if (previousSeconds <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+
+        return previousSeconds - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [request?.id, requestStatus, requestTimeoutMinutes]);
 
   function handleHelpPress() {
     if (!serviceEnabled) {
@@ -170,6 +195,28 @@ export default function HomeScreen() {
                     ? 'The volunteer has marked this assistance request as completed.'
                     : 'Your assistance request has been cancelled. If you still need help, you can submit a new request when the service is available.'}
             </Text>
+
+            {requestStatus === 'waiting' && (
+              <View style={styles.countdownContainer}>
+                <Text style={styles.countdownLabel}>
+                  TIME REMAINING
+                </Text>
+
+                <Text style={styles.countdownTime}>
+                  {Math.floor(remainingSeconds / 60)
+                    .toString()
+                    .padStart(2, '0')}
+                  :
+                  {(remainingSeconds % 60)
+                    .toString()
+                    .padStart(2, '0')}
+                </Text>
+
+                <Text style={styles.countdownHint}>
+                  We are waiting for a volunteer to accept your request.
+                </Text>
+              </View>
+            )}
 
             {requestStatus === 'waiting' && (
               <Pressable
@@ -328,6 +375,32 @@ const styles = StyleSheet.create({
     color: '#80530C',
     textAlign: 'center',
     marginTop: 8,
+  },
+  countdownContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+  },
+  countdownLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#80530C',
+    letterSpacing: 1,
+  },
+  countdownTime: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#D99A24',
+    marginTop: 5,
+    marginBottom: 5,
+  },
+  countdownHint: {
+    fontSize: 12,
+    color: '#526575',
+    textAlign: 'center',
   },
   cancelButton: {
     marginTop: 14,
