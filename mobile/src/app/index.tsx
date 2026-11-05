@@ -18,6 +18,7 @@ export default function HomeScreen() {
     requestTimeoutMinutes,
     createDemoRequest,
     cancelRequest,
+    markRequestTimedOut,
     resetDemo,
   } = useAssistance();
 
@@ -26,26 +27,41 @@ export default function HomeScreen() {
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   
   useEffect(() => {
-    if (requestStatus !== 'waiting') {
+    if (!request || request.status !== 'waiting') {
       setRemainingSeconds(0);
       return;
     }
 
-    setRemainingSeconds(requestTimeoutMinutes * 60);
+    if (request.timeoutEscalated) {
+      setRemainingSeconds(0);
+      return;
+    }
 
-    const interval = setInterval(() => {
-      setRemainingSeconds((previousSeconds) => {
-        if (previousSeconds <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
+    const updateCountdown = () => {
+      const secondsLeft = Math.max(
+        0,
+        Math.ceil((request.timeoutAt - Date.now()) / 1000),
+      );
 
-        return previousSeconds - 1;
-      });
-    }, 1000);
+      setRemainingSeconds(secondsLeft);
+
+      if (secondsLeft === 0 && !request.timeoutEscalated) {
+        markRequestTimedOut();
+      }
+    };
+
+    updateCountdown();
+
+    const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
-  }, [request?.id, requestStatus, requestTimeoutMinutes]);
+  }, [
+    request?.id,
+    request?.status,
+    request?.timeoutAt,
+    request?.timeoutEscalated,
+    markRequestTimedOut,
+  ]);
 
   function handleHelpPress() {
     if (!serviceEnabled) {
@@ -186,7 +202,9 @@ export default function HomeScreen() {
               ]}
             >
               {requestStatus === 'waiting'
-                ? "We're waiting for a volunteer to accept your request."
+                ? request.timeoutEscalated
+                ? 'No volunteer has accepted within the waiting period. The Safe Steps organiser and nominated trusted contacts are being notified.'
+                : "We're waiting for a volunteer to accept your request."
                 : requestStatus === 'accepted'
                   ? `${request.assignedVolunteerName} has accepted your request. They will contact you shortly.`
                   : requestStatus === 'contacted'

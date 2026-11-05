@@ -298,6 +298,22 @@ export default function OrganiserScreen() {
             <Text style={styles.detailLabel}>ASSIGNED VOLUNTEER</Text>
             <Text style={styles.detailValue}>
               {request.assignedVolunteerName ?? 'Not yet assigned'}
+              {request.timeoutEscalated && (
+                <View style={styles.timeoutAlert}>
+                  <Text style={styles.timeoutAlertTitle}>
+                    TIMEOUT – NO VOLUNTEER ACCEPTED
+                  </Text>
+
+                  <Text style={styles.timeoutAlertText}>
+                    This request exceeded its waiting period. Organiser escalation
+                    and trusted-contact notifications have been triggered in this demo.
+                  </Text>
+
+                  <Text style={styles.timeoutAlertNote}>
+                    DEMONSTRATION ONLY – NO REAL NOTIFICATIONS SENT
+                  </Text>
+                </View>
+              )}
             </Text>
             {request.assignedVolunteerId && (
               <>
@@ -636,6 +652,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#526575',
   },
+
   emergencyNote: {
     backgroundColor: '#FFFFFF',
     borderLeftWidth: 4,
@@ -806,5 +823,35 @@ const styles = StyleSheet.create({
 
   selectedTimeoutOptionText: {
     color: '#FFFFFF',
+  },
+  timeoutAlert: {
+    backgroundColor: '#FFF0E6',
+    borderLeftWidth: 4,
+    borderLeftColor: '#D93636',
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+
+  timeoutAlertTitle: {
+    color: '#B52B2B',
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+
+  timeoutAlertText: {
+    color: '#70412F',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+
+  timeoutAlertNote: {
+    color: '#B52B2B',
+    fontSize: 10,
+    fontWeight: '800',
+    marginTop: 10,
+    letterSpacing: 0.5,
   },
 });

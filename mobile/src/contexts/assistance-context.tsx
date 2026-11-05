@@ -23,6 +23,8 @@ export type AssistanceRequest = {
   requesterName: string;
   locationLabel: string;
   status: AssistanceStatus;
+  timeoutAt: number;
+  timeoutEscalated: boolean;
   assignedVolunteerId?: string;
   assignedVolunteerName?: string;
 };
@@ -47,6 +49,7 @@ type AssistanceContextType = {
   markContactMade: () => void;
   completeRequest: () => void;
   cancelRequest: () => void;
+  markRequestTimedOut: () => void;
   resetDemo: () => void;
 };
 
@@ -101,6 +104,8 @@ const AssistanceContext =
       requesterName: 'Alex Morgan',
       locationLabel: 'Town Centre, Demo Location',
       status: 'waiting',
+      timeoutAt: Date.now() + requestTimeoutMinutes * 60 * 1000,
+      timeoutEscalated: false,
     });
   }
 
@@ -199,6 +204,23 @@ const AssistanceContext =
     });
   }
 
+  function markRequestTimedOut() {
+    setRequest((currentRequest) => {
+      if (
+        !currentRequest ||
+        currentRequest.status !== 'waiting' ||
+        currentRequest.timeoutEscalated
+      ) {
+        return currentRequest;
+      }
+
+      return {
+        ...currentRequest,
+        timeoutEscalated: true,
+      };
+    });
+  }
+
   function resetDemo() {
     setRequest(null);
   }
@@ -222,6 +244,7 @@ const AssistanceContext =
         markContactMade,
         completeRequest,
         cancelRequest,
+        markRequestTimedOut,
         resetDemo,
       }}
     >
