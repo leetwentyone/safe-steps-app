@@ -67,6 +67,7 @@ export default function TrustedContactsScreen() {
         trustedContacts,
         addTrustedContact,
         removeTrustedContact,
+        updateTrustedContactStatus,
     } = useAssistance();
     return (
         <ScrollView contentContainerStyle={styles.container}>
@@ -142,6 +143,38 @@ export default function TrustedContactsScreen() {
                         ? 'CONFIRMED'
                         : 'DECLINED'}
                     </Text>
+
+                    {contact.status === 'confirmed' && (
+                    <Text style={styles.eligibleStatus}>
+                        ✓ ELIGIBLE FOR SAFE STEPS NOTIFICATIONS
+                    </Text>
+                    )}
+
+                    {contact.status === 'pending' && (
+                        <View style={styles.confirmationActions}>
+                            <Pressable
+                            style={styles.confirmButton}
+                            onPress={() =>
+                                updateTrustedContactStatus(contact.id, 'confirmed')
+                            }
+                            >
+                            <Text style={styles.confirmButtonText}>
+                                CONFIRM
+                            </Text>
+                            </Pressable>
+
+                            <Pressable
+                            style={styles.declineButton}
+                            onPress={() =>
+                                updateTrustedContactStatus(contact.id, 'declined')
+                            }
+                            >
+                            <Text style={styles.declineButtonText}>
+                                DECLINE
+                            </Text>
+                            </Pressable>
+                        </View>
+                    )}
 
                     <Pressable
                     style={styles.removeButton}
@@ -281,6 +314,14 @@ const styles = StyleSheet.create({
         letterSpacing: 0.4,
     },
 
+    eligibleStatus: {
+        color: '#237A45',
+        fontSize: 11,
+        fontWeight: '800',
+        marginTop: 8,
+        letterSpacing: 0.3,
+    },
+
     removeButton: {
         alignSelf: 'flex-start',
         marginTop: 12,
@@ -293,6 +334,39 @@ const styles = StyleSheet.create({
     removeButtonText: {
         color: '#B52B2B',
         fontSize: 11,
+        fontWeight: '800',
+    },
+    confirmationActions: {
+        flexDirection: 'row',
+        gap: 10,
+        marginTop: 14,
+    },
+
+    confirmButton: {
+        flex: 1,
+        backgroundColor: '#E2F3E9',
+        borderRadius: 8,
+        padding: 12,
+        alignItems: 'center',
+    },
+
+    confirmButtonText: {
+        color: '#237A45',
+        fontSize: 12,
+        fontWeight: '800',
+    },
+
+    declineButton: {
+        flex: 1,
+        backgroundColor: '#FCE8E8',
+        borderRadius: 8,
+        padding: 12,
+        alignItems: 'center',
+    },
+
+    declineButtonText: {
+        color: '#B52B2B',
+        fontSize: 12,
         fontWeight: '800',
     },
 });
