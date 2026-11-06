@@ -18,6 +18,19 @@ export type DemoVolunteer = {
   isAvailable: boolean;
 };
 
+export type TrustedContactStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'declined';
+
+export type TrustedContact = {
+  id: string;
+  name: string;
+  relationship: string;
+  mobileNumber: string;
+  status: TrustedContactStatus;
+};
+
 export type AssistanceRequest = {
   id: string;
   requesterName: string;
@@ -30,6 +43,11 @@ export type AssistanceRequest = {
 };
 
 type AssistanceContextType = {
+  trustedContacts: TrustedContact[];
+  addTrustedContact: (
+    contact: Omit<TrustedContact, 'id' | 'status'>,
+  ) => boolean;
+  removeTrustedContact: (contactId: string) => void;
   requestTimeoutMinutes: number;
   setRequestTimeoutMinutes: (minutes: number) => void;
   volunteers: DemoVolunteer[];
@@ -61,6 +79,8 @@ const AssistanceContext =
     }: PropsWithChildren) {
       const [request, setRequest] =
         useState<AssistanceRequest | null>(null);
+        const [trustedContacts, setTrustedContacts] =
+        useState<TrustedContact[]>([]);
         const [volunteers, setVolunteers] = useState<DemoVolunteer[]>([
       {
         id: 'vol-001',
@@ -84,6 +104,38 @@ const AssistanceContext =
       useState(2);
 
     const [volunteerAvailable, setVolunteerAvailable] = useState(false);
+
+  function addTrustedContact(
+    contact: Omit<TrustedContact, 'id' | 'status'>,
+  ): boolean {
+    if (trustedContacts.length >= 5) {
+      return false;
+    }
+
+    const newContact: TrustedContact = {
+      ...contact,
+      id: `contact-${Date.now()}`,
+      status: 'pending',
+    };
+
+    setTrustedContacts((currentContacts) => {
+      if (currentContacts.length >= 5) {
+        return currentContacts;
+      }
+
+      return [...currentContacts, newContact];
+    });
+
+    return true;
+  }
+
+  function removeTrustedContact(contactId: string) {
+    setTrustedContacts((currentContacts) =>
+      currentContacts.filter(
+        (contact) => contact.id !== contactId,
+      ),
+    );
+  }
 
   function updateVolunteerAvailability(
     volunteerId: string,
@@ -228,6 +280,9 @@ const AssistanceContext =
   return (
     <AssistanceContext.Provider
       value={{
+        trustedContacts,
+        addTrustedContact,
+        removeTrustedContact,
         requestTimeoutMinutes,
         setRequestTimeoutMinutes,
         volunteers,
