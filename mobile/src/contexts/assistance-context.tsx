@@ -48,6 +48,10 @@ type AssistanceContextType = {
     contact: Omit<TrustedContact, 'id' | 'status'>,
   ) => boolean;
   removeTrustedContact: (contactId: string) => void;
+  updateTrustedContactStatus: (
+    contactId: string,
+    status: TrustedContactStatus,
+  ) => void;
   requestTimeoutMinutes: number;
   setRequestTimeoutMinutes: (minutes: number) => void;
   volunteers: DemoVolunteer[];
@@ -105,9 +109,9 @@ const AssistanceContext =
 
     const [volunteerAvailable, setVolunteerAvailable] = useState(false);
 
-  function addTrustedContact(
-    contact: Omit<TrustedContact, 'id' | 'status'>,
-  ): boolean {
+    function addTrustedContact(
+      contact: Omit<TrustedContact, 'id' | 'status'>,
+    ): boolean {
     if (trustedContacts.length >= 5) {
       return false;
     }
@@ -133,6 +137,19 @@ const AssistanceContext =
     setTrustedContacts((currentContacts) =>
       currentContacts.filter(
         (contact) => contact.id !== contactId,
+      ),
+    );
+  }
+
+  function updateTrustedContactStatus(
+    contactId: string,
+    status: TrustedContactStatus,
+  ) {
+    setTrustedContacts((currentContacts) =>
+      currentContacts.map((contact) =>
+        contact.id === contactId
+          ? { ...contact, status }
+          : contact,
       ),
     );
   }
@@ -283,6 +300,7 @@ const AssistanceContext =
         trustedContacts,
         addTrustedContact,
         removeTrustedContact,
+        updateTrustedContactStatus,
         requestTimeoutMinutes,
         setRequestTimeoutMinutes,
         volunteers,
