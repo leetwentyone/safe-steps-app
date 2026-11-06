@@ -42,6 +42,12 @@ export type AssistanceRequest = {
   assignedVolunteerName?: string;
 };
 
+export type TimeoutEscalation = {
+  requestId: string;
+  triggeredAt: number;
+  notifiedContactIds: string[];
+};
+
 type AssistanceContextType = {
   trustedContacts: TrustedContact[];
   addTrustedContact: (
@@ -65,6 +71,7 @@ type AssistanceContextType = {
   volunteerAvailable: boolean;
   setVolunteerAvailable: (available: boolean) => void;
   request: AssistanceRequest | null;
+  timeoutEscalation: TimeoutEscalation | null;
   createDemoRequest: () => void;
   acceptRequest: (volunteerId: string) => void;
   reassignRequest: (volunteerId: string) => void;
@@ -85,6 +92,8 @@ const AssistanceContext =
         useState<AssistanceRequest | null>(null);
         const [trustedContacts, setTrustedContacts] =
         useState<TrustedContact[]>([]);
+        const [timeoutEscalation, setTimeoutEscalation] =
+        useState<TimeoutEscalation | null>(null);
         const [volunteers, setVolunteers] = useState<DemoVolunteer[]>([
       {
         id: 'vol-001',
@@ -283,6 +292,18 @@ const AssistanceContext =
         return currentRequest;
       }
 
+      const confirmedContacts = trustedContacts.filter(
+        (contact) => contact.status === 'confirmed',
+      );
+
+      setTimeoutEscalation({
+        requestId: currentRequest.id,
+        triggeredAt: Date.now(),
+        notifiedContactIds: confirmedContacts.map(
+          (contact) => contact.id,
+        ),
+      });
+
       return {
         ...currentRequest,
         timeoutEscalated: true,
@@ -311,6 +332,7 @@ const AssistanceContext =
         volunteerAvailable,
         setVolunteerAvailable,
         request,
+        timeoutEscalation,
         createDemoRequest,
         acceptRequest,
         reassignRequest,
