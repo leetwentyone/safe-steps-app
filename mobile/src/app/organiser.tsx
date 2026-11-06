@@ -56,12 +56,14 @@ export default function OrganiserScreen() {
 
   const {
     request,
+    timeoutEscalation,
     serviceEnabled,
     setServiceEnabled,
     volunteers,
     reassignRequest,
     requestTimeoutMinutes,
     setRequestTimeoutMinutes,
+    trustedContacts,
   } = useAssistance();
 
   const volunteersOnDuty = volunteers.filter(
@@ -312,6 +314,53 @@ export default function OrganiserScreen() {
                   <Text style={styles.timeoutAlertNote}>
                     DEMONSTRATION ONLY – NO REAL NOTIFICATIONS SENT
                   </Text>
+
+                  {timeoutEscalation?.requestId === request.id && (
+                  <View style={styles.notifiedContacts}>
+                    <Text style={styles.notifiedContactsHeading}>
+                      TRUSTED CONTACTS SELECTED
+                    </Text>
+
+                    {timeoutEscalation.notifiedContactIds.length === 0 ? (
+                      <Text style={styles.notifiedContactsText}>
+                        No confirmed trusted contacts were available.
+                      </Text>
+                    ) : (
+                      timeoutEscalation.notifiedContactIds.map((contactId) => {
+                        const contact = trustedContacts.find(
+                          (item) => item.id === contactId,
+                        );
+
+                        return contact ? (
+                          <View key={contact.id} style={styles.smsPreviewCard}>
+                            <Text style={styles.notifiedContactsText}>
+                              ✓ {contact.name} ({contact.relationship})
+                            </Text>
+
+                            <Text style={styles.smsPreviewHeading}>
+                              SMS NOTIFICATION PREVIEW
+                            </Text>
+
+                            <Text style={styles.smsPreviewMessage}>
+                              Hi {contact.name},
+
+                              Someone who has nominated you as a trusted contact
+                              has requested assistance through Safe Steps.
+
+                              Our volunteers are being alerted and the request
+                              is being monitored.
+
+                              You do not need to attend in person. If you believe
+                              someone is in immediate danger, please call 999.
+
+                              This is a demonstration message. No SMS has been sent.
+                            </Text>
+                          </View>
+                        ) : null;
+                      })
+                    )}
+                  </View>
+                )}
                 </View>
               )}
             </Text>
@@ -853,5 +902,49 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginTop: 10,
     letterSpacing: 0.5,
+  },
+  notifiedContacts: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 14,
+  },
+
+  notifiedContactsHeading: {
+    color: '#173B57',
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 8,
+    letterSpacing: 0.4,
+  },
+
+  notifiedContactsText: {
+    color: '#237A45',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 5,
+  },
+  smsPreviewCard: {
+    backgroundColor: '#F5F7FA',
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#DCE3E9',
+  },
+
+  smsPreviewHeading: {
+    color: '#173B57',
+    fontSize: 11,
+    fontWeight: '800',
+    marginTop: 14,
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+
+  smsPreviewMessage: {
+    color: '#526575',
+    fontSize: 13,
+    lineHeight: 21,
   },
 });
