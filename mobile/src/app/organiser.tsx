@@ -137,7 +137,7 @@ export default function OrganiserScreen() {
 
           <Text style={styles.description}>
             Choose how long a request can wait for a volunteer before
-            the organiser and the user's trusted contacts are notified.
+            the organiser and the user&apos;s trusted contacts are notified.
           </Text>
 
           <Text style={styles.timeoutValue}>

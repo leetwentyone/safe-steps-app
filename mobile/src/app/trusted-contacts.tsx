@@ -10,7 +10,6 @@ import {
 
 import { useState } from 'react';
 
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAssistance } from '@/contexts/assistance-context';
 
@@ -123,7 +122,7 @@ export default function TrustedContactsScreen() {
 
             {trustedContacts.length === 0 ? (
                 <Text style={styles.emptyText}>
-                You haven't added any trusted contacts yet.
+                You haven&apos;t added any trusted contacts yet.
                 </Text>
             ) : (
                 trustedContacts.map((contact) => (

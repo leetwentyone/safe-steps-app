@@ -24,44 +24,54 @@ export default function HomeScreen() {
 
   const requestStatus = request?.status ?? 'idle';
 
-  const [remainingSeconds, setRemainingSeconds] = useState(0);
-  
-  useEffect(() => {
-    if (!request || request.status !== 'waiting') {
-      setRemainingSeconds(0);
-      return;
-    }
+  const requestId = request?.id;
+  const timeoutAt = request?.timeoutAt;
+  const countdownActive =
+    request?.status === 'waiting' && !request.timeoutEscalated;
 
-    if (request.timeoutEscalated) {
-      setRemainingSeconds(0);
+  // Seconds left, tagged with the request they belong to. State is only set from timer
+  // callbacks; until the first tick, the full timeout length is shown.
+  const [countdown, setCountdown] = useState<{
+    requestId: string;
+    seconds: number;
+  } | null>(null);
+
+  const remainingSeconds = !countdownActive
+    ? 0
+    : countdown && countdown.requestId === requestId
+      ? countdown.seconds
+      : requestTimeoutMinutes * 60;
+
+  useEffect(() => {
+    if (!countdownActive || requestId === undefined || timeoutAt === undefined) {
       return;
     }
 
     const updateCountdown = () => {
       const secondsLeft = Math.max(
         0,
-        Math.ceil((request.timeoutAt - Date.now()) / 1000),
+        Math.ceil((timeoutAt - Date.now()) / 1000),
       );
 
-      setRemainingSeconds(secondsLeft);
+      setCountdown((previous) =>
+        previous?.requestId === requestId && previous.seconds === secondsLeft
+          ? previous
+          : { requestId, seconds: secondsLeft },
+      );
 
-      if (secondsLeft === 0 && !request.timeoutEscalated) {
+      if (secondsLeft === 0) {
         markRequestTimedOut();
       }
     };
 
-    updateCountdown();
-
+    const firstTick = setTimeout(updateCountdown, 0);
     const interval = setInterval(updateCountdown, 1000);
 
-    return () => clearInterval(interval);
-  }, [
-    request?.id,
-    request?.status,
-    request?.timeoutAt,
-    request?.timeoutEscalated,
-    markRequestTimedOut,
-  ]);
+    return () => {
+      clearTimeout(firstTick);
+      clearInterval(interval);
+    };
+  }, [requestId, timeoutAt, countdownActive, markRequestTimedOut]);
 
   function handleHelpPress() {
     if (!serviceEnabled) {
