@@ -21,6 +21,7 @@ const BACKGROUND = '#F5F7FA';
 export default function StaffLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   function handleLogin() {
     if (!email.trim() || !password.trim()) {
@@ -82,9 +83,32 @@ export default function StaffLoginScreen() {
               placeholder="Enter your password"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
+              secureTextEntry={!showPassword}
               autoCapitalize="none"
             />
+
+            <Pressable
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.passwordToggle}
+            >
+              <Text style={styles.passwordToggleText}>
+                {showPassword ? 'Hide password' : 'Show password'}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() =>
+                Alert.alert(
+                  'Password recovery',
+                  'Password reset will be available once secure staff authentication and email delivery are connected.',
+                )
+              }
+              style={styles.forgotPasswordButton}
+            >
+              <Text style={styles.forgotPasswordText}>
+                Forgot password?
+              </Text>
+            </Pressable>
 
             <Pressable
               style={styles.loginButton}
@@ -96,7 +120,7 @@ export default function StaffLoginScreen() {
             </Pressable>
 
             <Text style={styles.helpText}>
-              Volunteer access is provided by invitation from a Safe Steps organiser.
+              Volunteer accounts are created by invitation from a Safe Steps organiser. Organiser accounts are authorised separately by the Safe Steps system administrator. Public registration is not available.
             </Text>
           </View>
 
@@ -181,6 +205,28 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 15,
     color: NAVY,
+  },
+  passwordToggle: {
+    alignSelf: 'flex-end',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  passwordToggleText: {
+    color: BLUE,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+
+  forgotPasswordText: {
+    color: BLUE,
+    fontSize: 13,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   loginButton: {
     backgroundColor: BLUE,
