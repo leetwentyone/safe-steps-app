@@ -1,0 +1,15 @@
+{
+  "name": "small-steps-app",
+  "private": true,
+  "description": "Runs the Expo app in mobile/ from the repo root. Dependencies live in mobile/package.json.",
+  "scripts": {
+    "postinstall": "npm install --prefix mobile",
+    "start": "npm start --prefix mobile",
+    "ios": "npm run ios --prefix mobile",
+    "android": "npm run android --prefix mobile",
+    "web": "npm run web --prefix mobile",
+    "lint": "npm run lint --prefix mobile",
+    "typecheck": "cd mobile && npx tsc --noEmit",
+    "doctor": "cd mobile && npx expo-doctor"
+  }
+}

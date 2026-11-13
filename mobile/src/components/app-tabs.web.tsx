@@ -33,7 +33,9 @@ export default function AppTabs() {
   );
 }
 
-export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
+// `ref` is left out: expo-router types it as a View ref, which doesn't match Pressable's ref
+// type in React Native 0.88, and TabTrigger doesn't need it.
+export function TabButton({ children, isFocused, ref: _ref, ...props }: TabTriggerSlotProps) {
   return (
     <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView

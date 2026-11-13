@@ -35,7 +35,9 @@ npm install
 
 ## Running the app
 
-Run all commands from `mobile/`.
+Run all commands from `mobile/`. (From the repo root, `npm start`, `npm run ios|android|web|lint|typecheck|doctor`
+also work: the root `package.json` only passes them through to `mobile/`. Running `npx expo …` in the root
+fails with "The expected package.json path … does not exist".)
 
 ```bash
 npx expo start      # start the dev server (same as: npm start)
