@@ -11,7 +11,10 @@ import {
   View,
 } from 'react-native';
 
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { useVolunteerAuth } from '@/contexts/volunteer-auth-context';
 
 const NAVY = '#173B57';
 const BLUE = '#245B83';
@@ -22,9 +25,12 @@ export default function StaffLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleLogin() {
-    if (!email.trim() || !password.trim()) {
+  const { signIn, loading } = useVolunteerAuth();
+
+  async function handleLogin() {
+    if (!email.trim() || !password) {
       Alert.alert(
         'Missing information',
         'Please enter your email address and password.',
@@ -32,10 +38,22 @@ export default function StaffLoginScreen() {
       return;
     }
 
-    Alert.alert(
-      'Login not connected',
-      'Staff authentication will be connected when we build the secure backend.',
-    );
+    try {
+      setSubmitting(true);
+
+      await signIn(email.trim(), password);
+
+      router.replace('/(tabs)/volunteer');
+    } catch (error) {
+      Alert.alert(
+        'Login unsuccessful',
+        error instanceof Error
+          ? error.message
+          : 'Unable to sign in. Please try again.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -52,7 +70,7 @@ export default function StaffLoginScreen() {
           <Text style={styles.heading}>Staff Login</Text>
 
           <Text style={styles.description}>
-            Sign in to access your Safe Steps volunteer or organiser account.
+            Sign in to access your Safe Steps volunteer account.
           </Text>
 
           <View style={styles.formCard}>
@@ -72,6 +90,8 @@ export default function StaffLoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              autoComplete="email"
+              editable={!submitting}
             />
 
             <Text style={styles.inputLabel}>
@@ -85,11 +105,14 @@ export default function StaffLoginScreen() {
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
+              autoComplete="current-password"
+              editable={!submitting}
             />
 
             <Pressable
               onPress={() => setShowPassword(!showPassword)}
               style={styles.passwordToggle}
+              disabled={submitting}
             >
               <Text style={styles.passwordToggleText}>
                 {showPassword ? 'Hide password' : 'Show password'}
@@ -100,10 +123,11 @@ export default function StaffLoginScreen() {
               onPress={() =>
                 Alert.alert(
                   'Password recovery',
-                  'Password reset will be available once secure staff authentication and email delivery are connected.',
+                  'Password recovery will be connected separately.',
                 )
               }
               style={styles.forgotPasswordButton}
+              disabled={submitting}
             >
               <Text style={styles.forgotPasswordText}>
                 Forgot password?
@@ -111,16 +135,20 @@ export default function StaffLoginScreen() {
             </Pressable>
 
             <Pressable
-              style={styles.loginButton}
+              style={[
+                styles.loginButton,
+                (submitting || loading) && styles.loginButtonDisabled,
+              ]}
               onPress={handleLogin}
+              disabled={submitting || loading}
             >
               <Text style={styles.loginButtonText}>
-                SIGN IN
+                {submitting ? 'SIGNING IN...' : 'SIGN IN'}
               </Text>
             </Pressable>
 
             <Text style={styles.helpText}>
-              Volunteer accounts are created by invitation from a Safe Steps organiser. Organiser accounts are authorised separately by the Safe Steps system administrator. Public registration is not available.
+              Volunteer accounts are created by invitation from a Safe Steps organiser. Public registration is not available.
             </Text>
           </View>
 
@@ -221,7 +249,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 4,
   },
-
   forgotPasswordText: {
     color: BLUE,
     fontSize: 13,
@@ -234,6 +261,9 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginTop: 26,
+  },
+  loginButtonDisabled: {
+    opacity: 0.6,
   },
   loginButtonText: {
     color: '#FFFFFF',

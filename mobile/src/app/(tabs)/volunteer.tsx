@@ -1,5 +1,7 @@
-import { useState } from 'react';
+
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
@@ -8,13 +10,39 @@ import {
   View,
 } from 'react-native';
 
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useAssistance } from '@/contexts/assistance-context';
+import { useVolunteerAuth } from '@/contexts/volunteer-auth-context';
 
-  export default function VolunteerScreen() {
+export default function VolunteerScreen() {
+  const { volunteer, loading } = useVolunteerAuth();
+  const router = useRouter();
 
-    const [selectedVolunteerId, setSelectedVolunteerId] =
-      useState('vol-001');
+  useEffect(() => {
+    if (!loading && !volunteer) {
+      router.replace('/staff-login');
+    }
+  }, [loading, volunteer, router]);
+
+  if (loading || !volunteer) {
+    return (
+      <SafeAreaView style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color="#333333" />
+        <Text style={styles.loadingText}>
+          Checking your volunteer login...
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  return <VolunteerScreenContent />;
+}
+
+function VolunteerScreenContent() {
+  const [selectedVolunteerId, setSelectedVolunteerId] =
+    useState('vol-001');
 
   const {
     request,
@@ -27,23 +55,27 @@ import { useAssistance } from '@/contexts/assistance-context';
     resetDemo,
   } = useAssistance();
 
+  const { volunteer, signOut } = useVolunteerAuth();
+  const router = useRouter();
+
   const isMyRequest =
     request?.assignedVolunteerId === selectedVolunteerId;
 
-    const currentVolunteer = volunteers.find(
-     (volunteer) => volunteer.id === selectedVolunteerId,
-    );
+  const currentVolunteer = volunteers.find(
+    (item) => item.id === selectedVolunteerId,
+  );
 
-    const volunteerAvailable = currentVolunteer?.isAvailable ?? false;
+  const volunteerAvailable = currentVolunteer?.isAvailable ?? false;
 
   function handleAvailability() {
     if (!volunteerAvailable && !serviceEnabled) {
       Alert.alert(
         'Service unavailable',
-        'The Safe Steps service is currently switched off by the organiser. You cannot start a shift right now.'
+        'The Safe Steps service is currently switched off by the organiser. You cannot start a shift right now.',
       );
       return;
     }
+
     if (
       volunteerAvailable &&
       isMyRequest &&
@@ -80,6 +112,35 @@ import { useAssistance } from '@/contexts/assistance-context';
     );
   }
 
+  async function handleLogout() {
+    Alert.alert(
+      'Log out',
+      'Are you sure you want to log out of your volunteer account?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Log out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+              router.replace('/staff-login');
+            } catch {
+              Alert.alert(
+                'Logout problem',
+                'There was a problem contacting the server. Your local login has been cleared.',
+              );
+              router.replace('/staff-login');
+            }
+          },
+        },
+      ],
+    );
+  }
+
   function handleContactPress() {
     Alert.alert(
       'Contact requester',
@@ -93,7 +154,18 @@ import { useAssistance } from '@/contexts/assistance-context';
         <View style={styles.header}>
           <Text style={styles.logo}>SAFE STEPS</Text>
           <Text style={styles.subtitle}>VOLUNTEER AREA</Text>
+          <Text style={styles.loggedInText}>
+            Logged in as {volunteer?.first_name} {volunteer?.last_name}
+          </Text>
         </View>
+        <Pressable
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutButtonText}>
+            LOG OUT
+          </Text>
+        </Pressable>
 
         <View style={styles.serviceCard}>
           <Text style={styles.sectionLabel}>SERVICE STATUS</Text>
@@ -108,25 +180,25 @@ import { useAssistance } from '@/contexts/assistance-context';
           </Text>
         </View>
 
-                <View style={styles.availabilityCard}>
+        <View style={styles.availabilityCard}>
           <Text style={styles.sectionLabel}>SELECT VOLUNTEER</Text>
 
-          {volunteers.map((volunteer) => (
+          {volunteers.map((item) => (
             <Pressable
-              key={volunteer.id}
+              key={item.id}
               style={[
                 styles.volunteerOption,
-                selectedVolunteerId === volunteer.id &&
+                selectedVolunteerId === item.id &&
                   styles.selectedVolunteerOption,
               ]}
-              onPress={() => setSelectedVolunteerId(volunteer.id)}
+              onPress={() => setSelectedVolunteerId(item.id)}
             >
               <Text style={styles.volunteerOptionText}>
-                {volunteer.name}
+                {item.name}
               </Text>
 
               <Text style={styles.smallText}>
-                {volunteer.isAvailable ? 'ON DUTY' : 'OFF DUTY'}
+                {item.isAvailable ? 'ON DUTY' : 'OFF DUTY'}
               </Text>
             </Pressable>
           ))}
@@ -159,192 +231,192 @@ import { useAssistance } from '@/contexts/assistance-context';
         </View>
 
         <View style={styles.requestsSection}>
-  <Text style={styles.sectionHeading}>INCOMING REQUESTS</Text>
+          <Text style={styles.sectionHeading}>INCOMING REQUESTS</Text>
 
-  {!volunteerAvailable && (
-    <View style={styles.emptyCard}>
-      <Text style={styles.emptyText}>
-        Opt in to your volunteer shift to receive requests.
-      </Text>
-    </View>
-  )}
-
-  {volunteerAvailable && !request && (
-    <View style={styles.emptyCard}>
-      <Text style={styles.emptyText}>
-        No active requests at the moment. Requests submitted from the Public
-        tab will appear here.
-      </Text>
-    </View>
-  )}
-
-  {volunteerAvailable && request?.status === 'waiting' && (
-    <View style={styles.requestCard}>
-      <Text style={styles.requestLabel}>
-        NEW ASSISTANCE REQUEST
-      </Text>
-
-      <Text style={styles.requestTitle}>
-        Someone needs assistance
-      </Text>
-
-      <Text style={styles.requestDescription}>
-        A member of the public has requested help nearby.
-      </Text>
-
-      <Pressable
-        style={styles.acceptButton}
-        onPress={() => acceptRequest(selectedVolunteerId)}
-      >
-        <Text style={styles.acceptButtonText}>
-          ACCEPT REQUEST
-        </Text>
-      </Pressable>
-    </View>
-  )}
-
-  {request && isMyRequest && (
-    <View style={styles.activeCard}>
-      <View style={styles.activeHeader}>
-        <Text style={styles.activeHeading}>
-          ACTIVE ASSISTANCE
-        </Text>
-
-        <View style={styles.activeBadge}>
-          <Text style={styles.activeBadgeText}>
-            {request.status === 'accepted'
-              ? 'ACCEPTED'
-              : request.status === 'contacted'
-                ? 'CONTACT MADE'
-                : 'COMPLETED'}
-          </Text>
-        </View>
-      </View>
-
-      <Text style={styles.requesterName}>
-        {request.requesterName}
-      </Text>
-
-      <Text style={styles.requestDescription}>
-        Demo requester · Fictional information
-      </Text>
-
-      <View style={styles.detailDivider} />
-
-      <Text style={styles.detailLabel}>REQUEST LOCATION</Text>
-      <Text style={styles.detailValue}>
-        {request.locationLabel}
-      </Text>
-
-      <Text style={styles.detailLabel}>REQUEST REFERENCE</Text>
-      <Text style={styles.detailValue}>
-        {request.id}
-      </Text>
-
-      <View style={styles.detailDivider} />
-
-      <Text style={styles.progressHeading}>
-        ASSISTANCE PROGRESS
-      </Text>
-
-      <View style={styles.progressRow}>
-        <View style={styles.progressDot} />
-        <Text style={styles.progressText}>
-          Request accepted
-        </Text>
-      </View>
-
-      <View style={styles.progressRow}>
-        <View
-          style={[
-            styles.progressDot,
-            request.status !== 'accepted' &&
-              styles.progressDotComplete,
-          ]}
-        />
-        <Text style={styles.progressText}>
-          Contact made
-        </Text>
-      </View>
-
-      <View style={styles.progressRow}>
-        <View
-          style={[
-            styles.progressDot,
-            request.status === 'completed' &&
-              styles.progressDotComplete,
-          ]}
-        />
-        <Text style={styles.progressText}>
-          Assistance completed
-        </Text>
-      </View>
-
-      {request.status !== 'completed' && (
-        <>
-          <Pressable
-            style={styles.contactButton}
-            onPress={handleContactPress}
-          >
-            <Text style={styles.actionButtonText}>
-              CONTACT REQUESTER
-            </Text>
-          </Pressable>
-
-          {request.status === 'accepted' && (
-            <Pressable
-              style={styles.contactMadeButton}
-              onPress={handleContactMade}
-            >
-              <Text style={styles.actionButtonText}>
-                MARK CONTACT MADE
+          {!volunteerAvailable && (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>
+                Opt in to your volunteer shift to receive requests.
               </Text>
-            </Pressable>
+            </View>
           )}
 
-          {request.status === 'contacted' && (
-            <Pressable
-              style={styles.completeButton}
-              onPress={completeAssistance}
-            >
-              <Text style={styles.actionButtonText}>
-                MARK ASSISTANCE COMPLETED
+          {volunteerAvailable && !request && (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>
+                No active requests at the moment. Requests submitted from the Public
+                tab will appear here.
               </Text>
-            </Pressable>
+            </View>
           )}
-        </>
-      )}
 
-      {request.status === 'completed' && (
-        <View style={styles.completedMessage}>
-          <Text style={styles.completedMessageText}>
-            This assistance request has been completed.
-          </Text>
+          {volunteerAvailable && request?.status === 'waiting' && (
+            <View style={styles.requestCard}>
+              <Text style={styles.requestLabel}>
+                NEW ASSISTANCE REQUEST
+              </Text>
+
+              <Text style={styles.requestTitle}>
+                Someone needs assistance
+              </Text>
+
+              <Text style={styles.requestDescription}>
+                A member of the public has requested help nearby.
+              </Text>
+
+              <Pressable
+                style={styles.acceptButton}
+                onPress={() => acceptRequest(selectedVolunteerId)}
+              >
+                <Text style={styles.acceptButtonText}>
+                  ACCEPT REQUEST
+                </Text>
+              </Pressable>
+            </View>
+          )}
+
+          {request && isMyRequest && (
+            <View style={styles.activeCard}>
+              <View style={styles.activeHeader}>
+                <Text style={styles.activeHeading}>
+                  ACTIVE ASSISTANCE
+                </Text>
+
+                <View style={styles.activeBadge}>
+                  <Text style={styles.activeBadgeText}>
+                    {request.status === 'accepted'
+                      ? 'ACCEPTED'
+                      : request.status === 'contacted'
+                        ? 'CONTACT MADE'
+                        : 'COMPLETED'}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.requesterName}>
+                {request.requesterName}
+              </Text>
+
+              <Text style={styles.requestDescription}>
+                Demo requester · Fictional information
+              </Text>
+
+              <View style={styles.detailDivider} />
+
+              <Text style={styles.detailLabel}>REQUEST LOCATION</Text>
+              <Text style={styles.detailValue}>
+                {request.locationLabel}
+              </Text>
+
+              <Text style={styles.detailLabel}>REQUEST REFERENCE</Text>
+              <Text style={styles.detailValue}>
+                {request.id}
+              </Text>
+
+              <View style={styles.detailDivider} />
+
+              <Text style={styles.progressHeading}>
+                ASSISTANCE PROGRESS
+              </Text>
+
+              <View style={styles.progressRow}>
+                <View style={styles.progressDot} />
+                <Text style={styles.progressText}>
+                  Request accepted
+                </Text>
+              </View>
+
+              <View style={styles.progressRow}>
+                <View
+                  style={[
+                    styles.progressDot,
+                    request.status !== 'accepted' &&
+                      styles.progressDotComplete,
+                  ]}
+                />
+                <Text style={styles.progressText}>
+                  Contact made
+                </Text>
+              </View>
+
+              <View style={styles.progressRow}>
+                <View
+                  style={[
+                    styles.progressDot,
+                    request.status === 'completed' &&
+                      styles.progressDotComplete,
+                  ]}
+                />
+                <Text style={styles.progressText}>
+                  Assistance completed
+                </Text>
+              </View>
+
+              {request.status !== 'completed' && (
+                <>
+                  <Pressable
+                    style={styles.contactButton}
+                    onPress={handleContactPress}
+                  >
+                    <Text style={styles.actionButtonText}>
+                      CONTACT REQUESTER
+                    </Text>
+                  </Pressable>
+
+                  {request.status === 'accepted' && (
+                    <Pressable
+                      style={styles.contactMadeButton}
+                      onPress={handleContactMade}
+                    >
+                      <Text style={styles.actionButtonText}>
+                        MARK CONTACT MADE
+                      </Text>
+                    </Pressable>
+                  )}
+
+                  {request.status === 'contacted' && (
+                    <Pressable
+                      style={styles.completeButton}
+                      onPress={completeAssistance}
+                    >
+                      <Text style={styles.actionButtonText}>
+                        MARK ASSISTANCE COMPLETED
+                      </Text>
+                    </Pressable>
+                  )}
+                </>
+              )}
+
+              {request.status === 'completed' && (
+                <View style={styles.completedMessage}>
+                  <Text style={styles.completedMessageText}>
+                    This assistance request has been completed.
+                  </Text>
+                </View>
+              )}
+
+              <Pressable
+                style={styles.resetButton}
+                onPress={resetDemo}
+              >
+                <Text style={styles.resetButtonText}>
+                  Reset demonstration
+                </Text>
+              </Pressable>
+            </View>
+          )}
+
+          {volunteerAvailable &&
+            request &&
+            request.status !== 'waiting' &&
+            !isMyRequest && (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>
+                  This request has already been accepted by another volunteer.
+                </Text>
+              </View>
+            )}
         </View>
-      )}
-
-      <Pressable
-        style={styles.resetButton}
-        onPress={resetDemo}
-      >
-        <Text style={styles.resetButtonText}>
-          Reset demonstration
-        </Text>
-      </Pressable>
-    </View>
-  )}
-
-  {volunteerAvailable &&
-    request &&
-    request.status !== 'waiting' &&
-    !isMyRequest && (
-      <View style={styles.emptyCard}>
-        <Text style={styles.emptyText}>
-          This request has already been accepted by another volunteer.
-        </Text>
-      </View>
-    )}
-</View>
 
         <View style={styles.emergencyNote}>
           <Text style={styles.emergencyText}>
@@ -362,6 +434,17 @@ import { useAssistance } from '@/contexts/assistance-context';
 }
 
 const styles = StyleSheet.create({
+  loadingScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#333333',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#F5F7FA',
@@ -387,6 +470,27 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     color: '#526575',
     marginTop: 7,
+  },
+  loggedInText: {
+    fontSize: 13,
+    color: '#333333',
+    marginTop: 10,
+  },
+  logoutButton: {
+    marginTop: 5,
+    marginBottom: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 8,
+  },
+
+  logoutButtonText: {
+    color: '#333333',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   serviceCard: {
     backgroundColor: '#FFFFFF',
@@ -480,18 +584,6 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: '#71808D',
     textAlign: 'center',
-  },
-  demoButton: {
-    marginTop: 18,
-    backgroundColor: '#173B57',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-  },
-  demoButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
   },
   requestCard: {
     backgroundColor: '#FFF4DC',
@@ -667,7 +759,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#526575',
   },
-    volunteerOption: {
+  volunteerOption: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#DCE3E8',
