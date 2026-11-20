@@ -7,10 +7,12 @@ import {
   View,
 } from 'react-native';
 
-import { useEffect, useState } from 'react';
-import { Link } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAssistance } from '@/contexts/assistance-context';
+import { hasPublicProfilePasscode } from '@/services/public-profile-passcode';
+import { getPublicDeviceCredentials } from '@/services/public-profile-storage';
+import { Link, router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const {
@@ -24,6 +26,34 @@ export default function HomeScreen() {
   } = useAssistance();
 
   const requestStatus = request?.status ?? 'idle';
+  const [hasLocalSafetyProfile, setHasLocalSafetyProfile] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkSafetyProfile() {
+      try {
+        const [credentials, passcodeExists] = await Promise.all([
+          getPublicDeviceCredentials(),
+          hasPublicProfilePasscode(),
+        ]);
+
+        if (isMounted) {
+          setHasLocalSafetyProfile(Boolean(credentials && passcodeExists));
+        }
+      } catch {
+        if (isMounted) {
+          setHasLocalSafetyProfile(false);
+        }
+      }
+    }
+
+    checkSafetyProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const requestId = request?.id;
   const timeoutAt = request?.timeoutAt;
@@ -181,6 +211,33 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
         </View>
+
+        {hasLocalSafetyProfile && (
+          <Pressable
+            style={styles.profileButton}
+            onPress={() => router.push('/public-profile/unlock')}
+          >
+            <Text style={styles.profileButtonTitle}>
+              Access Your Safety Profile
+            </Text>
+            <Text style={styles.profileButtonDescription}>
+              Unlock your saved emergency contacts using your six-digit passcode.
+            </Text>
+          </Pressable>
+        )}
+
+        <Pressable
+          style={styles.profileButton}
+          onPress={() => router.push('/public-profile/register')}
+        >
+          <Text style={styles.profileButtonTitle}>
+            Create Your Safety Profile
+          </Text>
+
+          <Text style={styles.profileButtonDescription}>
+            Optionally save up to five emergency contacts for future assistance.
+          </Text>
+        </Pressable>
 
         {request && (
           <View
@@ -474,5 +531,28 @@ const styles = StyleSheet.create({
     color: '#245B83',
     marginTop: 14,
     textDecorationLine: 'underline',
+  },
+    profileButton: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 12,
+    padding: 18,
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  profileButtonTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+  },
+  profileButtonDescription: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#333333',
+    textAlign: 'center',
+    marginTop: 6,
   },
 });

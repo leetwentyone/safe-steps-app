@@ -1,7 +1,7 @@
 import { API_BASE_URL } from '@/constants/api';
 
 type ApiOptions = {
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST' | 'DELETE';
   token?: string;
   body?: Record<string, unknown>;
 };
