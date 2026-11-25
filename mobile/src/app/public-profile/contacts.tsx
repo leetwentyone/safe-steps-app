@@ -70,7 +70,6 @@ export default function PublicProfileContactsScreen() {
     }, [loadContacts])
   );
 
-
   function confirmDeleteContact(contact: EmergencyContact) {
     Alert.alert(
       'Remove emergency contact',
@@ -198,6 +197,7 @@ export default function PublicProfileContactsScreen() {
               <Text style={styles.consentStatus}>
                 {getConsentLabel(contact.sms_consent_status)}
               </Text>
+      
               <Pressable
                 style={styles.removeButton}
                 onPress={() => confirmDeleteContact(contact)}
