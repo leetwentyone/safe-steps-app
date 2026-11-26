@@ -1,7 +1,71 @@
-import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
+import { apiRequest } from '@/services/api';
+import { getPublicDeviceCredentials } from '@/services/public-profile-storage';
+
+type ContactsResponse = {
+  success: boolean;
+  count: number;
+  contacts: {
+    id: number;
+    relationship: string;
+    phone_number: string;
+    sms_consent_status: string;
+    sms_consent_at: string | null;
+  }[];
+};
 
 export default function PublicProfileDashboardScreen() {
+  const [contactCount, setContactCount] = useState(0);
+  const [contactsLoading, setContactsLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      async function loadContactCount() {
+        try {
+          const credentials = await getPublicDeviceCredentials();
+
+          if (!credentials) {
+            return;
+          }
+
+          const response = await apiRequest<ContactsResponse>(
+            '/public/contacts',
+            {
+              token: credentials.deviceToken,
+            }
+          );
+
+          if (isActive) {
+            setContactCount(response.count);
+          }
+        } catch (error) {
+          console.error('Unable to load emergency contact count:', error);
+        } finally {
+          if (isActive) {
+            setContactsLoading(false);
+          }
+        }
+      }
+
+      loadContactCount();
+
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
   return (
     <ScrollView
       style={styles.container}
@@ -17,10 +81,13 @@ export default function PublicProfileDashboardScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Emergency Contacts</Text>
-        <Text style={styles.contactCount}>0 of 5</Text>
+        <Text style={styles.contactCount}>
+          {contactsLoading ? 'Loading...' : `${contactCount} of 5`}
+        </Text>
         <Text style={styles.cardDescription}>
-          You haven't added any emergency contacts yet. You can save up to
-          five trusted people who may be contacted when needed.
+          {contactCount === 0
+            ? "You haven't added any emergency contacts yet. You can save up to five trusted people who may be contacted when needed."
+            : `You have saved ${contactCount} of your five emergency contacts. You can manage or update these whenever you need to.`}
         </Text>
 
         <Pressable

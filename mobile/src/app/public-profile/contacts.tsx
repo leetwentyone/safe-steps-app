@@ -31,6 +31,12 @@ export default function PublicProfileContactsScreen() {
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [invitationMessages, setInvitationMessages] = useState<
+    Record<number, string>
+  >({});
+  const [preparingInvitation, setPreparingInvitation] = useState<
+    Record<number, boolean>
+  >({});
 
   const loadContacts = useCallback(async () => {
     setLoading(true);
@@ -126,10 +132,89 @@ export default function PublicProfileContactsScreen() {
     switch (status) {
       case 'confirmed':
         return 'SMS consent confirmed';
+
       case 'declined':
         return 'SMS consent declined';
+
+      case 'withdrawn':
+        return 'SMS consent withdrawn';
+
+      case 'pending':
       default:
         return 'SMS consent pending';
+    }
+  }
+
+  function getConsentStyle(status: string) {
+    switch (status) {
+      case 'confirmed':
+        return styles.consentConfirmed;
+
+      case 'declined':
+        return styles.consentDeclined;
+
+      case 'withdrawn':
+        return styles.consentWithdrawn;
+
+      case 'pending':
+      default:
+        return styles.consentPending;
+    }
+  }
+
+  function canPrepareConsentInvitation(status: string) {
+    return status !== 'confirmed';
+  }
+
+  async function prepareConsentInvitation(contact: EmergencyContact) {
+    setPreparingInvitation((previous) => ({
+      ...previous,
+      [contact.id]: true,
+    }));
+
+    setInvitationMessages((previous) => ({
+      ...previous,
+      [contact.id]: '',
+    }));
+
+    try {
+      const credentials = await getPublicDeviceCredentials();
+
+      if (!credentials) {
+        throw new Error(
+          'Please return to your Safety Profile and unlock it again.'
+        );
+      }
+
+      const response = await apiRequest<{
+        success: boolean;
+        message: string;
+        expires_at?: string;
+      }>(
+        `/public/contacts/${contact.id}/consent-invitation`,
+        {
+          method: 'POST',
+          token: credentials.deviceToken,
+        }
+      );
+
+      setInvitationMessages((previous) => ({
+        ...previous,
+        [contact.id]: response.message,
+      }));
+    } catch (error) {
+      setInvitationMessages((previous) => ({
+        ...previous,
+        [contact.id]:
+          error instanceof Error
+            ? error.message
+            : 'We couldn’t connect to Safe Steps just now. Please check your internet connection and try again shortly.',
+      }));
+    } finally {
+      setPreparingInvitation((previous) => ({
+        ...previous,
+        [contact.id]: false,
+      }));
     }
   }
 
@@ -194,9 +279,37 @@ export default function PublicProfileContactsScreen() {
                 {contact.phone_number}
               </Text>
 
-              <Text style={styles.consentStatus}>
+              <Text
+                style={[
+                  styles.consentStatus,
+                  getConsentStyle(contact.sms_consent_status),
+                ]}
+              >
                 {getConsentLabel(contact.sms_consent_status)}
               </Text>
+
+              {canPrepareConsentInvitation(contact.sms_consent_status) && (
+                <Pressable
+                  style={[
+                    styles.invitationButton,
+                    preparingInvitation[contact.id] && styles.disabledButton,
+                  ]}
+                  onPress={() => prepareConsentInvitation(contact)}
+                  disabled={!!preparingInvitation[contact.id]}
+                >
+                  <Text style={styles.invitationButtonText}>
+                    {preparingInvitation[contact.id]
+                      ? 'Preparing...'
+                      : 'Prepare Consent Invitation'}
+                  </Text>
+                </Pressable>
+              )}
+
+              {invitationMessages[contact.id] ? (
+                <Text style={styles.invitationMessage}>
+                  {invitationMessages[contact.id]}
+                </Text>
+              ) : null}
       
               <Pressable
                 style={styles.removeButton}
@@ -349,9 +462,54 @@ const styles = StyleSheet.create({
   },
   consentStatus: {
     fontSize: 13,
-    color: '#333333',
+    fontWeight: '400',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
   },
-    removeButton: {
+  consentConfirmed: {
+    color: '#FFFFFF',
+    backgroundColor: '#2b9348',
+    fontWeight: '400',
+  },
+  consentPending: {
+    color: '#FFFFFF',
+    backgroundColor: '#000000',
+    fontWeight: '400',
+  },
+  consentDeclined: {
+    color: '#FFFFFF',
+    backgroundColor: '#d00000',
+    fontWeight: '400',
+  },
+  consentWithdrawn: {
+    color: '#FFFFFF',
+    backgroundColor: '#d00000',
+    fontWeight: '400',
+  },
+  invitationButton: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 6,
+  },
+  invitationButtonText: {
+    color: '#000000',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  invitationMessage: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#333333',
+    marginTop: 10,
+  },
+  removeButton: {
     alignSelf: 'flex-start',
     marginTop: 14,
     paddingVertical: 8,
