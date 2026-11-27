@@ -1,3 +1,4 @@
+import { useAssistance } from '@/contexts/assistance-context';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -24,6 +25,7 @@ type ContactsResponse = {
 };
 
 export default function PublicProfileDashboardScreen() {
+  const { lockPublicProfile } = useAssistance();
   const [contactCount, setContactCount] = useState(0);
   const [contactsLoading, setContactsLoading] = useState(true);
 
@@ -110,7 +112,10 @@ export default function PublicProfileDashboardScreen() {
 
       <Pressable
         style={styles.lockButton}
-        onPress={() => router.replace('/(tabs)')}
+        onPress={() => {
+          lockPublicProfile();
+          router.replace('/(tabs)');
+        }}
       >
         <Text style={styles.lockButtonText}>Lock Safety Profile</Text>
       </Pressable>

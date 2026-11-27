@@ -7,25 +7,50 @@ import {
   View,
 } from 'react-native';
 
-import { useAssistance } from '@/contexts/assistance-context';
+import {
+  useAssistance,
+  type AssistanceRequest
+} from '@/contexts/assistance-context';
+import { apiRequest } from '@/services/api';
 import { hasPublicProfilePasscode } from '@/services/public-profile-passcode';
 import { getPublicDeviceCredentials } from '@/services/public-profile-storage';
+import * as Location from 'expo-location';
 import { Link, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+type PublicAssistanceResponse = {
+  success: boolean;
+  request: {
+    id: number;
+    status: 'waiting';
+    timeout_at: string;
+  };
+};
+
 export default function HomeScreen() {
   const {
+    publicProfileUnlocked,
     request,
     serviceEnabled,
     requestTimeoutMinutes,
     createDemoRequest,
+    createLiveRequest,
     cancelRequest,
     markRequestTimedOut,
     resetDemo,
   } = useAssistance();
 
   const requestStatus = request?.status ?? 'idle';
+  const isLiveRequest = Boolean(
+    request && request.id !== 'SS-DEMO-001',
+  );
+  const [liveServiceEnabled, setLiveServiceEnabled] = useState(false);
+  const [liveRequestTimeoutMinutes, setLiveRequestTimeoutMinutes] = useState(2);
+  const [serviceStatusLoading, setServiceStatusLoading] = useState(true);
+  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<Location.LocationObject | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [hasLocalSafetyProfile, setHasLocalSafetyProfile] = useState(false);
 
   useEffect(() => {
@@ -49,6 +74,45 @@ export default function HomeScreen() {
     }
 
     checkSafetyProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadServiceStatus() {
+      try {
+        const response = await apiRequest<{
+          success: boolean;
+          service: {
+            enabled: boolean;
+            request_timeout_minutes: number;
+          };
+        }>('/public/service');
+
+        if (isMounted && response.success) {
+          setLiveServiceEnabled(response.service.enabled);
+          setLiveRequestTimeoutMinutes(
+            response.service.request_timeout_minutes,
+          );
+        }
+      } catch (error) {
+        console.error('Unable to load Safe Steps service status:', error);
+
+        if (isMounted) {
+          setLiveServiceEnabled(false);
+        }
+      } finally {
+        if (isMounted) {
+          setServiceStatusLoading(false);
+        }
+      }
+    }
+
+    loadServiceStatus();
 
     return () => {
       isMounted = false;
@@ -90,7 +154,7 @@ export default function HomeScreen() {
           : { requestId, seconds: secondsLeft },
       );
 
-      if (secondsLeft === 0) {
+      if (secondsLeft === 0 && !isLiveRequest) {
         markRequestTimedOut();
       }
     };
@@ -104,8 +168,88 @@ export default function HomeScreen() {
     };
   }, [requestId, timeoutAt, countdownActive, markRequestTimedOut]);
 
-  function handleHelpPress() {
-    if (!serviceEnabled) {
+  async function getCurrentDeviceLocation(): Promise<Location.LocationObject | null> {
+    setLocationLoading(true);
+
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+
+      if (!permission.granted) {
+        setLocationPermissionGranted(false);
+        Alert.alert(
+          'Location permission required',
+          'Safe Steps needs access to your location so volunteers can find you. Please enable location access in your device settings.',
+        );
+        return null;
+      }
+
+      setLocationPermissionGranted(true);
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      setCurrentLocation(location);
+
+      return location;
+    } catch (error) {
+      console.error('Unable to obtain device location:', error);
+
+      Alert.alert(
+        'Unable to get your location',
+        'Please try again. If someone is in immediate danger, call 999.',
+      );
+
+      return null;
+    } finally {
+      setLocationLoading(false);
+    }
+  }
+
+  function getLocationCoordinates(location: Location.LocationObject) {
+    return {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    };
+  }
+
+  async function submitPublicAssistanceRequest(
+    location: Location.LocationObject,
+    requesterName?: string,
+  ): Promise<PublicAssistanceResponse> {
+    const coordinates = getLocationCoordinates(location);
+        const credentials = publicProfileUnlocked
+      ? await getPublicDeviceCredentials()
+      : null;
+
+    return apiRequest<PublicAssistanceResponse>('/requests', {
+      method: 'POST',
+      token: credentials?.deviceToken,
+      body: {
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        location_label: 'Current GPS Location',
+        requester_name: requesterName || '',
+      },
+    });
+  }
+
+  function convertToLiveAssistanceRequest(
+    response: PublicAssistanceResponse,
+    requesterName: string,
+  ): AssistanceRequest {
+    return {
+      id: String(response.request.id),
+      requesterName,
+      locationLabel: 'Current GPS Location',
+      status: 'waiting',
+      timeoutAt: new Date(`${response.request.timeout_at.replace(' ', 'T')}Z`).getTime(),
+      timeoutEscalated: false,
+    };
+  }
+
+  async function handleHelpPress() {
+    if (serviceStatusLoading || !liveServiceEnabled) {
       Alert.alert(
         'Service unavailable',
         'Safe Steps is currently switched off. Please try again later. If someone is in immediate danger, call 999.',

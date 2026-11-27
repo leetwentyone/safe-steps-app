@@ -163,7 +163,7 @@ export default function PublicProfileContactsScreen() {
   }
 
   function canPrepareConsentInvitation(status: string) {
-    return status !== 'confirmed';
+    return status === 'pending';
   }
 
   async function prepareConsentInvitation(contact: EmergencyContact) {

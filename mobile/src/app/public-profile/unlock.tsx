@@ -1,20 +1,22 @@
+import { useAssistance } from '@/contexts/assistance-context';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
 import {
-    verifyPublicProfilePasscode,
+  verifyPublicProfilePasscode,
 } from '@/services/public-profile-passcode';
 
 export default function PublicProfileUnlockScreen() {
+  const { unlockPublicProfile } = useAssistance();
   const [passcode, setPasscode] = useState('');
   const [unlocking, setUnlocking] = useState(false);
 
@@ -41,7 +43,10 @@ export default function PublicProfileUnlockScreen() {
         return;
       }
 
+      unlockPublicProfile();
+
       router.replace('/public-profile/dashboard');
+      
     } catch (error) {
       Alert.alert(
         'Unable to unlock',

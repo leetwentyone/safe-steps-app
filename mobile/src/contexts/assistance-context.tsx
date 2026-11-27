@@ -21,7 +21,8 @@ export type DemoVolunteer = {
 export type TrustedContactStatus =
   | 'pending'
   | 'confirmed'
-  | 'declined';
+  | 'declined'
+  | 'withdrawn';
 
 export type TrustedContact = {
   id: string;
@@ -49,6 +50,9 @@ export type TimeoutEscalation = {
 };
 
 type AssistanceContextType = {
+  publicProfileUnlocked: boolean;
+  unlockPublicProfile: () => void;
+  lockPublicProfile: () => void;
   trustedContacts: TrustedContact[];
   addTrustedContact: (
     contact: Omit<TrustedContact, 'id' | 'status'>,
@@ -73,6 +77,7 @@ type AssistanceContextType = {
   request: AssistanceRequest | null;
   timeoutEscalation: TimeoutEscalation | null;
   createDemoRequest: () => void;
+  createLiveRequest: (liveRequest: AssistanceRequest) => void;
   acceptRequest: (volunteerId: string) => void;
   reassignRequest: (volunteerId: string) => void;
   markContactMade: () => void;
@@ -90,11 +95,14 @@ const AssistanceContext =
     }: PropsWithChildren) {
       const [request, setRequest] =
         useState<AssistanceRequest | null>(null);
+        const [publicProfileUnlocked, setPublicProfileUnlocked] =
+        useState(false);
         const [trustedContacts, setTrustedContacts] =
         useState<TrustedContact[]>([]);
         const [timeoutEscalation, setTimeoutEscalation] =
         useState<TimeoutEscalation | null>(null);
         const [volunteers, setVolunteers] = useState<DemoVolunteer[]>([
+          
       {
         id: 'vol-001',
         name: 'Demo Volunteer',
@@ -117,6 +125,14 @@ const AssistanceContext =
       useState(2);
 
     const [volunteerAvailable, setVolunteerAvailable] = useState(false);
+
+    function unlockPublicProfile() {
+      setPublicProfileUnlocked(true);
+    }
+
+    function lockPublicProfile() {
+      setPublicProfileUnlocked(false);
+    }
 
     function addTrustedContact(
       contact: Omit<TrustedContact, 'id' | 'status'>,
@@ -185,6 +201,10 @@ const AssistanceContext =
       timeoutAt: Date.now() + requestTimeoutMinutes * 60 * 1000,
       timeoutEscalated: false,
     });
+  }
+
+  function createLiveRequest(liveRequest: AssistanceRequest) {
+    setRequest(liveRequest);
   }
 
   function acceptRequest(volunteerId: string) {
@@ -318,6 +338,9 @@ const AssistanceContext =
   return (
     <AssistanceContext.Provider
       value={{
+        publicProfileUnlocked,
+        unlockPublicProfile,
+        lockPublicProfile,
         trustedContacts,
         addTrustedContact,
         removeTrustedContact,
@@ -334,6 +357,7 @@ const AssistanceContext =
         request,
         timeoutEscalation,
         createDemoRequest,
+        createLiveRequest,
         acceptRequest,
         reassignRequest,
         markContactMade,
